@@ -146,12 +146,38 @@
                         <button onclick="simpanManual('siswa')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition">Simpan Siswa</button>
                     </div>
                 </div>
+                
                 <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-                    <h3 class="font-bold text-white text-lg mb-4 flex items-center gap-2"><i data-lucide="briefcase" class="text-orange-500"></i> Tambah Guru Satuan</h3>
+                    <h3 class="font-bold text-white text-lg mb-4 flex items-center gap-2"><i data-lucide="briefcase" class="text-orange-500"></i> Tambah Pegawai (Guru/Staff)</h3>
                     <div class="space-y-4">
-                        <input type="text" id="manualNamaGuru" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700" placeholder="Nama Lengkap Guru">
-                        <input type="text" id="manualNIP" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700" placeholder="NIP (Akan jadi Username)">
-                        <button onclick="simpanManual('guru')" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg transition">Simpan Guru</button>
+                        <div>
+                            <label class="text-xs text-slate-500 uppercase font-bold ml-1">Nama Lengkap</label>
+                            <input type="text" id="manualNamaGuru" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700" placeholder="Nama Lengkap & Gelar">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-slate-500 uppercase font-bold ml-1">NIP/User</label>
+                                <input type="text" id="manualNIP" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700" placeholder="NIP">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500 uppercase font-bold ml-1">Password</label>
+                                <input type="text" id="manualPassGuru" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700" placeholder="Pass" value="123456">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-slate-500 uppercase font-bold ml-1">Jabatan / Role</label>
+                            <select id="manualRoleGuru" class="w-full bg-slate-950 text-white p-3 rounded-lg border border-slate-700 outline-none">
+                                <option value="guru" selected>Guru Mapel</option>
+                                <option value="bk">Koordinator BK</option>
+                                <option value="kurikulum">Waka Kurikulum</option>
+                                <option value="staff">Staff TU</option>
+                                <option value="admin">Admin IT</option>
+                            </select>
+                        </div>
+
+                        <button onclick="simpanManual('guru')" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-lg transition">Simpan Pegawai</button>
                     </div>
                 </div>
             </div>
@@ -439,7 +465,10 @@
             if(hasil.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-400">Tidak ditemukan.</td></tr>'; return; }
             hasil.slice(0, 10).forEach(s => {
                 let badgeColor = s.role === 'guru' ? 'bg-orange-500 text-white' : (s.role === 'admin' ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-300');
-                let infoKelas = s.role === 'siswa' ? s.kelas : 'Pengajar';
+                if(s.role === 'bk') badgeColor = 'bg-emerald-600 text-white';
+                if(s.role === 'kurikulum') badgeColor = 'bg-yellow-600 text-white';
+                
+                let infoKelas = s.role === 'siswa' ? s.kelas : s.role.toUpperCase();
                 tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800"><td class="p-3 text-white font-bold">${s.nama || "Tanpa Nama"}</td><td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${badgeColor}">${s.role}</span></td><td class="p-3 font-mono text-xs text-blue-400">${s.username}</td><td class="p-3 text-xs text-slate-400">${infoKelas}</td><td class="p-3 text-right flex justify-end gap-2"><button onclick="editUser('${s.username}')" class="bg-yellow-500 hover:bg-yellow-400 text-black px-3 py-1 rounded text-xs font-bold transition">Edit</button><button onclick="hapusUser('${s.username}', '${s.nama}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition">Hapus</button></td></tr>`;
             });
         }
@@ -465,10 +494,10 @@
                 
                 // Tambahkan Opsi 'Bukan Wali Kelas' khusus untuk Guru
                 if(user.role === 'guru') {
-                     const option = document.createElement("option");
-                     option.text = "- Bukan Wali Kelas -";
-                     option.value = "-";
-                     selectKelas.add(option, selectKelas[0]); // Taruh di paling atas
+                      const option = document.createElement("option");
+                      option.text = "- Bukan Wali Kelas -";
+                      option.value = "-";
+                      selectKelas.add(option, selectKelas[0]); // Taruh di paling atas
                 }
 
                 // Set nilai kelas saat ini (kalau kosong/undefined jadi strip)
@@ -527,18 +556,26 @@
 
         window.simpanManual = async (role) => {
             let nama, user, pass, kelas;
+            let roleFix = role; // Default
+
             if(role === 'siswa') {
                 nama = document.getElementById('manualNamaSiswa').value; user = document.getElementById('manualNISN').value; kelas = document.getElementById('manualKelas').value; pass = user; 
                 if(!nama || !user || !kelas) return Swal.fire('Lengkapi', 'Nama, NISN, dan Kelas wajib diisi', 'warning');
             } else {
-                nama = document.getElementById('manualNamaGuru').value; user = document.getElementById('manualNIP').value; pass = "123456"; kelas = "-";
+                // INPUT GURU YANG SUDAH DIPERBAIKI (BISA PILIH ROLE & PASS)
+                nama = document.getElementById('manualNamaGuru').value; 
+                user = document.getElementById('manualNIP').value; 
+                pass = document.getElementById('manualPassGuru').value || "123456"; 
+                kelas = "-";
+                roleFix = document.getElementById('manualRoleGuru').value; // Ambil role dari dropdown
+
                 if(!nama || !user) return Swal.fire('Lengkapi', 'Nama dan NIP wajib diisi', 'warning');
             }
             try {
                 const docRef = doc(db, "users", user); const docSnap = await getDoc(docRef); if (docSnap.exists()) return Swal.fire('Gagal', `Username ${user} sudah ada!`, 'error');
-                const dataBaru = { nama, username: user, password: pass, role, kelas, wali_kelas: "-" };
+                const dataBaru = { nama, username: user, password: pass, role: roleFix, kelas, wali_kelas: "-" };
                 await setDoc(doc(db, "users", user), dataBaru);
-                Swal.fire('Berhasil', `Data ${role} tersimpan!`, 'success');
+                Swal.fire('Berhasil', `Data ${roleFix.toUpperCase()} tersimpan!`, 'success');
                 if(role === 'siswa') { document.getElementById('manualNamaSiswa').value=''; document.getElementById('manualNISN').value=''; document.getElementById('manualKelas').value=''; }
                 else { document.getElementById('manualNamaGuru').value=''; document.getElementById('manualNIP').value=''; }
                 listUsers.push(dataBaru); localStorage.setItem('master_user_full_v1', JSON.stringify(listUsers)); updateDashboardStats();
