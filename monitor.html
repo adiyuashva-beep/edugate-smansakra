@@ -214,6 +214,21 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+        // --- 🔒 SATPAM MONITOR (Hanya Admin, Super, BK, Kurikulum) ---
+        const cekSesi = sessionStorage.getItem('user_siganteng');
+        if (!cekSesi) {
+            alert("Akses Ditolak! Harap Login sebagai Admin.");
+            window.location.href = 'index.html';
+        } else {
+            const user = JSON.parse(cekSesi);
+            const allowedRoles = ['admin', 'super', 'bk', 'kurikulum'];
+            if (!allowedRoles.includes(user.role)) {
+                alert("Akses Ditolak! Hanya untuk Monitor Admin.");
+                window.location.href = 'index.html';
+            }
+        }
+        // -------------------------------------------------------------
+
         // --- KONFIGURASI EDUGATE SMAN 1 KARANGANYAR ---
         const firebaseConfig = {
           apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c",

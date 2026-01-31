@@ -278,15 +278,21 @@
                 const rolesPejabat = ['kurikulum', 'super', 'admin', 'bk']; 
                 if (rolesPejabat.includes(userGuru.role)) { tampilkanTombolPortal(userGuru.role); }
 
-                if(userGuru.wali_kelas && userGuru.wali_kelas !== "-") { initWaliKelas(userGuru.wali_kelas); } 
+                // --- LOGIKA UTAMA WALI KELAS (PERBAIKAN KOLEKSI USERS) ---
+                if(userGuru.wali_kelas && userGuru.wali_kelas !== "-" && userGuru.wali_kelas !== "") { 
+                    initWaliKelas(userGuru.wali_kelas); 
+                } 
                 else {
-                    getDoc(doc(db, "guru", userGuru.username)).then(snap => {
+                    // Cek update di database USERS (bukan guru)
+                    getDoc(doc(db, "users", userGuru.username)).then(snap => {
                         if(snap.exists()){
                             const d = snap.data();
-                            if(d.wali_kelas && d.wali_kelas !== "-") {
-                                userGuru.wali_kelas = d.wali_kelas;
+                            // Kalau di database ternyata sudah jadi wali kelas (abis diedit admin)
+                            if(d.kelas && d.kelas !== "-" && d.kelas !== "") {
+                                userGuru.wali_kelas = d.kelas; // Update session lokal
+                                userGuru.kelas = d.kelas;
                                 sessionStorage.setItem('user_siganteng', JSON.stringify(userGuru));
-                                initWaliKelas(d.wali_kelas);
+                                initWaliKelas(d.kelas);
                             }
                         }
                     });
@@ -314,7 +320,6 @@
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = () => {
-                        // KOMPRESI GAMBAR (Biar hemat kuota)
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 800; // Resize ke 800px
                         const scaleSize = MAX_WIDTH / img.width;
@@ -324,14 +329,12 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         
-                        // Convert ke DataURL (Quality 0.6)
                         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                         
                         fotoBuktiJurnal = compressedDataUrl;
                         document.getElementById('preview-foto-jurnal').innerText = "Foto Galeri Siap ✔";
                         document.getElementById('preview-foto-jurnal').className = "text-xs text-indigo-600 font-bold italic ml-2";
                         
-                        // Tampilkan Preview
                         const imgPrev = document.getElementById('img-preview-upload');
                         imgPrev.src = compressedDataUrl;
                         imgPrev.classList.remove('hidden');
@@ -362,7 +365,8 @@
         function initDashboard() { 
             document.getElementById('nama-guru').innerText = userGuru.nama; 
             document.getElementById('nip-guru').innerText = "NIP: " + userGuru.username; 
-            getDoc(doc(db, "guru", userGuru.username)).then(snap => {
+            // PERBAIKAN: Ambil foto profil dari USERS (bukan guru)
+            getDoc(doc(db, "users", userGuru.username)).then(snap => {
                 if(snap.exists() && snap.data().foto_profil) document.getElementById('foto-guru').src = snap.data().foto_profil;
             });
         }
@@ -468,9 +472,26 @@
         window.bukaKameraJurnal = () => { tipeAbsenAktif = "Jurnal"; document.getElementById('judul-kamera').innerText = "FOTO BUKTI KBM"; document.getElementById('modalKamera').classList.remove('hidden'); currentFacingMode='environment'; initKamera(currentFacingMode); }
         window.tutupKamera = () => { document.getElementById('modalKamera').classList.add('hidden'); if(streamKamera) streamKamera.getTracks().forEach(t=>t.stop()); }
         window.gantiKamera = () => { currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user'; initKamera(currentFacingMode); }
-        window.jepret = async () => { const vid = document.getElementById('videoStream'); const can = document.getElementById('canvasFoto'); can.width = 480; can.height = 480; can.getContext('2d').drawImage(vid,0,0,480,480); const foto = can.toDataURL('image/jpeg', 0.7); if(tipeAbsenAktif === 'ProfilGuru') { try { tutupKamera(); Swal.fire({title:'Mengupdate Profil...', didOpen:()=>Swal.showLoading()}); const snap = await uploadString(ref(storage, `profil_guru/${userGuru.username}.jpg`), foto, 'data_url'); const url = await getDownloadURL(snap.ref); await setDoc(doc(db, "guru", userGuru.username), { foto_profil: url, updated_at: serverTimestamp() }, { merge: true }); Swal.fire('Cakep!', 'Foto profil berhasil diperbarui.', 'success'); } catch(e) { Swal.fire('Gagal', e.message, 'error'); } return; } if(tipeAbsenAktif === 'Jurnal') { fotoBuktiJurnal = foto; document.getElementById('preview-foto-jurnal').innerText = "Foto Siap ✔"; document.getElementById('preview-foto-jurnal').className = "text-xs text-green-600 font-bold italic ml-2"; tutupKamera(); 
+        window.jepret = async () => { 
+            const vid = document.getElementById('videoStream'); 
+            const can = document.getElementById('canvasFoto'); 
+            can.width = 480; can.height = 480; can.getContext('2d').drawImage(vid,0,0,480,480); 
+            const foto = can.toDataURL('image/jpeg', 0.7); 
+            if(tipeAbsenAktif === 'ProfilGuru') { 
+                try { 
+                    tutupKamera(); Swal.fire({title:'Mengupdate Profil...', didOpen:()=>Swal.showLoading()}); 
+                    const snap = await uploadString(ref(storage, `profil_guru/${userGuru.username}.jpg`), foto, 'data_url'); 
+                    const url = await getDownloadURL(snap.ref); 
+                    // PERBAIKAN: Update foto profil ke koleksi USERS (bukan guru)
+                    await setDoc(doc(db, "users", userGuru.username), { foto_profil: url, updated_at: serverTimestamp() }, { merge: true }); 
+                    Swal.fire('Cakep!', 'Foto profil berhasil diperbarui.', 'success'); 
+                    document.getElementById('foto-guru').src = url;
+                } catch(e) { Swal.fire('Gagal', e.message, 'error'); } return; 
+            } 
+            if(tipeAbsenAktif === 'Jurnal') { fotoBuktiJurnal = foto; document.getElementById('preview-foto-jurnal').innerText = "Foto Siap ✔"; document.getElementById('preview-foto-jurnal').className = "text-xs text-green-600 font-bold italic ml-2"; tutupKamera(); 
             // Tampilkan Preview
-            const imgPrev = document.getElementById('img-preview-upload'); imgPrev.src = foto; imgPrev.classList.remove('hidden'); return; } }
+            const imgPrev = document.getElementById('img-preview-upload'); imgPrev.src = foto; imgPrev.classList.remove('hidden'); return; } 
+        }
 
         window.kirimJurnal = async () => { 
             const kls = document.getElementById('jurnal-kelas').value; const mapel = document.getElementById('jurnal-mapel').value; const materi = document.getElementById('jurnal-materi').value; 
