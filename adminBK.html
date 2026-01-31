@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel BK - EduGate SMAN 1 Karanganyar</title>
+    <title>Panel Kesiswaan (BK) - EduGate SMAN 1 Karanganyar</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -16,11 +16,12 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .nav-item.active { background: rgba(16, 185, 129, 0.1); border-right: 3px solid #10b981; color: #34d399; }
         
-        /* Table Sticky */
+        /* Table Sticky Header & Column */
         .table-sticky th { position: sticky; top: 0; z-index: 30; background: #1e293b; }
         .table-sticky td:first-child, .table-sticky th:first-child { position: sticky; left: 0; z-index: 40; background: #1e293b; border-right: 1px solid #334155; }
         .table-sticky td:nth-child(2), .table-sticky th:nth-child(2) { position: sticky; left: 40px; z-index: 40; background: #1e293b; border-right: 1px solid #334155; }
 
+        /* Warna Cell Rekap */
         .bg-weekend { background-color: #334155; color: #475569; }
         .bg-hadir { background-color: #064e3b; color: #a7f3d0; font-size: 0.65rem; vertical-align: middle; line-height: 1.1; }
         .bg-dispen { background-color: #581c87; color: #e9d5ff; font-weight: bold; vertical-align: middle; }
@@ -55,7 +56,7 @@
                 <i data-lucide="file-check-2" class="w-5 h-5"></i> Kelola Dispensasi (D)
             </button>
             <button onclick="nav('mbg')" id="nav-mbg" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
-                <i data-lucide="utensils" class="w-5 h-5"></i> Laporan MBG
+                <i data-lucide="utensils" class="w-5 h-5"></i> Program MBG
             </button>
             <button onclick="nav('libur')" id="nav-libur" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
                 <i data-lucide="calendar-off" class="w-5 h-5"></i> Kelola Hari Libur
@@ -102,13 +103,6 @@
                 <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800"><p class="text-slate-500 text-xs font-bold uppercase">Izin / Sakit</p><h3 class="text-3xl font-black text-blue-400 mt-1" id="stat-izin">0</h3></div>
                 <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800"><p class="text-slate-500 text-xs font-bold uppercase">Alpha / Belum</p><h3 class="text-3xl font-black text-red-400 mt-1" id="stat-alpha">0</h3></div>
                 <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800"><p class="text-slate-500 text-xs font-bold uppercase">Total Siswa</p><h3 class="text-3xl font-black text-white mt-1" id="stat-total">0</h3></div>
-            </div>
-
-            <div class="mt-6">
-                <h3 class="font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="grid" class="w-5 h-5 text-emerald-500"></i> Pantauan Per Kelas</h3>
-                <div id="grid-kelas-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    <div class="col-span-full text-center text-slate-500 py-10">Memuat data kelas...</div>
-                </div>
             </div>
 
             <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden mt-6">
@@ -231,8 +225,11 @@
 
         <div id="view-mbg" class="hidden space-y-6 fade-in">
              <div class="flex items-center justify-between">
-                <h2 class="text-3xl font-bold text-white">Laporan MBG</h2>
-                <div class="text-xs text-slate-500 bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">Data Hari Ini</div>
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Program Makan Bergizi Gratis (MBG)</h2>
+                    <p class="text-xs text-slate-400">Estimasi Katering Berdasarkan Kehadiran Realtime</p>
+                </div>
+                <div class="text-xs text-emerald-400 bg-emerald-900/30 border border-emerald-800 px-3 py-1 rounded-lg font-bold">DATA LIVE HARI INI</div>
              </div>
              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 relative overflow-hidden group hover:border-blue-500 transition cursor-pointer" onclick="previewMBG('X')"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20"><i data-lucide="utensils" class="w-24 h-24 text-blue-500"></i></div><h3 class="text-xl font-black text-white">KELAS X</h3><p class="text-xs text-slate-400 mt-2">Lihat Rincian</p></div>
@@ -242,7 +239,7 @@
              <div id="container-tabel-mbg" class="hidden bg-white text-slate-900 rounded-2xl p-6 shadow-xl mt-6 border border-slate-700">
                 <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg text-slate-800" id="judul-tabel-mbg">Detail Logistik</h3><button onclick="downloadExcel('tabel-mbg-detail')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Download Cetak</button></div>
                 <div class="overflow-x-auto">
-                    <table id="tabel-mbg-detail" class="w-full text-sm border border-slate-300"><thead class="bg-slate-100"><tr><th class="border p-3 text-left w-32">KELAS</th><th class="border p-3 text-center w-32">TOTAL SISWA</th><th class="border p-3 bg-green-100 text-green-800 text-center font-black text-lg">JATAH MAKAN</th><th class="border p-3 bg-red-100 text-red-800 text-center">SISA</th></tr></thead><tbody id="tbody-mbg" class="text-slate-700 text-center"></tbody><tfoot class="bg-slate-800 text-white font-bold"><tr><td class="border border-slate-600 p-3 text-right">TOTAL</td><td class="border border-slate-600 p-3 text-center" id="mbg-grand-total">0</td><td class="border border-slate-600 p-3 text-center bg-green-900 text-green-300 text-xl" id="mbg-grand-hadir">0</td><td class="border border-slate-600 p-3 text-center bg-red-900 text-red-300" id="mbg-grand-sisa">0</td></tr></tfoot></table>
+                    <table id="tabel-mbg-detail" class="w-full text-sm border border-slate-300"><thead class="bg-slate-100"><tr><th class="border p-3 text-left w-32">KELAS</th><th class="border p-3 text-center w-32">TOTAL SISWA</th><th class="border p-3 bg-green-100 text-green-800 text-center font-black text-lg">JATAH MAKAN (HADIR)</th><th class="border p-3 bg-red-100 text-red-800 text-center">SISA (TIDAK HADIR)</th></tr></thead><tbody id="tbody-mbg" class="text-slate-700 text-center"></tbody><tfoot class="bg-slate-800 text-white font-bold"><tr><td class="border border-slate-600 p-3 text-right">TOTAL</td><td class="border border-slate-600 p-3 text-center" id="mbg-grand-total">0</td><td class="border border-slate-600 p-3 text-center bg-green-900 text-green-300 text-xl" id="mbg-grand-hadir">0</td><td class="border border-slate-600 p-3 text-center bg-red-900 text-red-300" id="mbg-grand-sisa">0</td></tr></tfoot></table>
                 </div>
              </div>
         </div>
@@ -275,6 +272,20 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, getDoc, onSnapshot, doc, setDoc, addDoc, deleteDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL, uploadBytes } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+        // --- 🔒 SATPAM PANEL BK (Hanya Admin, Super, BK) ---
+        const cekSesi = sessionStorage.getItem('user_siganteng');
+        if (!cekSesi) {
+            window.location.href = 'index.html';
+        } else {
+            const user = JSON.parse(cekSesi);
+            const allowedRoles = ['admin', 'super', 'bk'];
+            if (!allowedRoles.includes(user.role)) {
+                alert("Akses Ditolak! Panel Khusus BK/Kesiswaan.");
+                window.location.href = 'index.html';
+            }
+        }
+        // ---------------------------------------------------
 
         // --- KONFIGURASI EDUGATE SMAN 1 KARANGANYAR ---
         const firebaseConfig = {

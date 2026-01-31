@@ -156,6 +156,20 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+        // --- 🔒 SATPAM PANEL KURIKULUM (Hanya Kurikulum, Admin, Super) ---
+        const cekSesi = sessionStorage.getItem('user_siganteng');
+        if (!cekSesi) {
+            window.location.href = 'index.html';
+        } else {
+            const user = JSON.parse(cekSesi);
+            const allowedRoles = ['admin', 'super', 'kurikulum'];
+            if (!allowedRoles.includes(user.role)) {
+                alert("Akses Ditolak! Panel Khusus Waka Kurikulum.");
+                window.location.href = 'index.html';
+            }
+        }
+        // -----------------------------------------------------------------
+
         // --- KONFIGURASI EDUGATE SMAN 1 KARANGANYAR ---
         const firebaseConfig = {
           apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c",
@@ -446,7 +460,6 @@
 
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Rekap Monitoring");
             XLSX.utils.book_append_sheet(wb, ws, "Rekap Monitoring");
             XLSX.writeFile(wb, `MONITORING_KBM_${document.getElementById('filter-tanggal').value}.xlsx`);
         }
