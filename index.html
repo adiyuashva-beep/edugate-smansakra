@@ -177,7 +177,6 @@
             loader.style.display = 'flex';
 
             // --- ⚠️ BACKDOOR EMERGENCY (Super Admin Only) ---
-            // Ini PENTING buat login pertama kali karena database kosong
             if (u === 'admin' && p === '123') {
                 saveSession({
                     username: 'admin',
@@ -190,7 +189,7 @@
             }
 
             try {
-                // 1. CARI USER DI DATABASE
+                // 1. CARI USER DI DATABASE USERS
                 const docRef = doc(db, "users", u);
                 const docSnap = await getDoc(docRef);
 
@@ -202,27 +201,38 @@
 
                 // 2. CEK PASSWORD
                 const passAsli = String(userData.password);
-                const passOrtu = "ortu" + String(userData.username || u); // Gunakan u jika username null
+                const passOrtu = "ortu" + String(userData.username || u); // Password Wali Murid
 
                 // Skenario A: Login Pemilik Akun (Siswa/Guru/Admin)
                 if (String(p) === passAsli) {
                     
-                    // --- PERBAIKAN KRUSIAL DISINI ---
-                    // Paksa simpan username ke dalam object sebelum disimpan ke sesi
                     userData.username = u;
                     userData.nisn = u; 
-                    // --------------------------------
                     
                     saveSession(userData);
                     
                     const role = userData.role ? userData.role.toLowerCase() : 'siswa';
-                    let targetFile = 'siswa.html';
+                    let targetFile = 'siswa.html'; // Default
 
-                    if (role === 'super' || role === 'admin') targetFile = 'admin.html';
-                    else if (role === 'bk') targetFile = 'adminBK.html';
-                    else if (role === 'kurikulum') targetFile = 'adminKBM.html';
-                    else if (role === 'guru') targetFile = 'guru.html';
-                    else if (role === 'siswa') targetFile = 'siswa.html';
+                    if (role === 'super' || role === 'admin') {
+                        targetFile = 'admin.html';
+                    } else if (role === 'bk') {
+                        targetFile = 'adminBK.html';
+                    } else if (role === 'kurikulum') {
+                        targetFile = 'adminKBM.html';
+                    } else if (role === 'guru') {
+                        // --- 🚦 POLISI LALU LINTAS STAFF/KARYAWAN ---
+                        // Cek kolom kelas apakah mengandung kata kunci staff
+                        const jabatan = (userData.kelas || "").toUpperCase();
+                        if (jabatan.includes("STAF") || jabatan.includes("TATA USAHA") || jabatan.includes("KARYAWAN") || jabatan.includes("TU") || jabatan.includes("SATPAM") || jabatan.includes("KEBERSIHAN")) {
+                            targetFile = 'karyawan.html'; // Belok ke Panel Karyawan
+                        } else {
+                            targetFile = 'guru.html'; // Lurus ke Panel Guru
+                        }
+                        // ---------------------------------------------
+                    } else if (role === 'siswa') {
+                        targetFile = 'siswa.html';
+                    }
 
                     Swal.fire({
                         icon: 'success',
@@ -235,15 +245,18 @@
                         window.location.href = targetFile;
                     });
                 } 
-                // Skenario B: Login Wali Murid
+                // Skenario B: Login Wali Murid (Password: ortu + NISN)
                 else if (String(p) === passOrtu) {
-                    userData.username = u; // Fix juga untuk ortu
+                    userData.username = u; 
+                    
+                    // Simpan data anak ke localStorage khusus Ortu
                     localStorage.setItem('userSiswa', JSON.stringify(userData));
                     sessionStorage.setItem('mode_ortu', 'true');
+                    sessionStorage.setItem('ortu_anak_nisn', u);
                     
                     Swal.fire({
                         icon: 'success', title: 'Mode Wali Murid', 
-                        text: `Memantau: ${userData.nama}`,
+                        text: `Memantau siswa: ${userData.nama}`,
                         timer: 1000, showConfirmButton: false
                     }).then(() => {
                         window.location.href = 'ortu.html';

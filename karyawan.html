@@ -43,7 +43,7 @@
             <div>
                 <h2 id="nama-user" class="text-lg font-bold leading-tight">...</h2>
                 <p id="nip-user" class="text-xs font-mono text-slate-300 mt-1">...</p>
-                <div class="mt-2 inline-block bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">PEJUANG NIP</div>
+                <div id="jabatan-user" class="mt-2 inline-block bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">KARYAWAN</div>
             </div>
         </div>
     </header>
@@ -118,6 +118,10 @@
         <div class="absolute bottom-10 z-30"><button onclick="jepret()" class="w-16 h-16 bg-white rounded-full border-4 border-slate-300 shadow-xl active:scale-95 transition"></button></div>
     </div>
 
+    <div id="loading" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent"></div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -149,12 +153,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            const sess = sessionStorage.getItem('user_siganteng'); // Masih pakai session yang sama saat login
+            const sess = sessionStorage.getItem('user_siganteng'); 
             if (sess) {
                 userUser = JSON.parse(sess);
                 initProfil();
                 syncAdmin();
                 cekGPS();
+                cekStatusAbsenHariIni();
             } else {
                 window.location.href = 'index.html';
             }
@@ -163,9 +168,31 @@
         function initProfil() {
             document.getElementById('nama-user').innerText = userUser.nama;
             document.getElementById('nip-user').innerText = "ID: " + userUser.username;
-            // Ambil foto profil
-            getDoc(doc(db, "guru", userUser.username)).then(snap => {
+            // Tampilkan Jabatan/Kelas (Misal: STAF TATA USAHA)
+            if(userUser.kelas && userUser.kelas !== '-') {
+                 document.getElementById('jabatan-user').innerText = userUser.kelas;
+            }
+
+            // PERBAIKAN: Ambil dari USERS, bukan guru
+            getDoc(doc(db, "users", userUser.username)).then(snap => {
                 if(snap.exists() && snap.data().foto_profil) document.getElementById('foto-profil').src = snap.data().foto_profil;
+            });
+        }
+        
+        function cekStatusAbsenHariIni() {
+            const todayStr = new Date().toLocaleDateString('fr-CA');
+            const idDoc = `${todayStr}_${userUser.username}`;
+            getDoc(doc(db, "absensi", idDoc)).then(snap => {
+                if(snap.exists()) {
+                    const d = snap.data();
+                    if(d.jam_pulang) {
+                        document.getElementById('status-absen').innerText = "Sudah Pulang";
+                        document.getElementById('status-absen').className = "text-[10px] font-bold bg-slate-700 text-white px-3 py-1 rounded-full";
+                    } else if(d.jam_masuk) {
+                        document.getElementById('status-absen').innerText = "Sudah Masuk";
+                        document.getElementById('status-absen').className = "text-[10px] font-bold bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full";
+                    }
+                }
             });
         }
 
@@ -190,22 +217,25 @@
         window.jepret = async () => { 
             const vid = document.getElementById('videoStream'); const can = document.getElementById('canvasFoto'); can.width = 480; can.height = 480; can.getContext('2d').drawImage(vid,0,0,480,480); const foto = can.toDataURL('image/jpeg', 0.7); 
             
-            // Simpan Profil
-            if(tipeAbsenAktif === 'ProfilKaryawan') { try { tutupKamera(); Swal.fire({title:'Mengupdate Profil...', didOpen:()=>Swal.showLoading()}); const snap = await uploadString(ref(storage, `profil_guru/${userUser.username}.jpg`), foto, 'data_url'); const url = await getDownloadURL(snap.ref); await setDoc(doc(db, "guru", userUser.username), { foto_profil: url, updated_at: serverTimestamp() }, { merge: true }); Swal.fire('Cakep!', 'Foto profil berhasil diperbarui.', 'success'); document.getElementById('foto-profil').src = foto; } catch(e) { Swal.fire('Gagal', e.message, 'error'); } return; } 
+            // Simpan Profil KE KOLEKSI USERS
+            if(tipeAbsenAktif === 'ProfilKaryawan') { try { tutupKamera(); Swal.fire({title:'Mengupdate Profil...', didOpen:()=>Swal.showLoading()}); const snap = await uploadString(ref(storage, `profil_guru/${userUser.username}.jpg`), foto, 'data_url'); const url = await getDownloadURL(snap.ref); await setDoc(doc(db, "users", userUser.username), { foto_profil: url, updated_at: serverTimestamp() }, { merge: true }); Swal.fire('Cakep!', 'Foto profil berhasil diperbarui.', 'success'); document.getElementById('foto-profil').src = foto; } catch(e) { Swal.fire('Gagal', e.message, 'error'); } return; } 
             
-            // Simpan Absen (Logic Sama, Status 'Guru' kita ganti 'Karyawan' biar beda dikit di DB kalau mau)
+            // Simpan Absen (Role tetap 'guru' di mata DB, tapi kelas 'KARYAWAN' atau Jabatan Asli)
             const todayStr = new Date().toLocaleDateString('fr-CA'); const idDoc = `${todayStr}_${userUser.username}`; 
             try { 
                 tutupKamera(); Swal.fire({title:'Menyimpan...', didOpen:()=>Swal.showLoading()}); 
                 const snap = await uploadString(ref(storage, `absen_guru/${todayStr}/${userUser.username}_${tipeAbsenAktif}.jpg`), foto, 'data_url'); 
                 const url = await getDownloadURL(snap.ref); 
-                let data = { nisn: userUser.username, nama: userUser.nama, kelas: 'KARYAWAN', role: 'guru', tanggal: todayStr, status_terakhir: tipeAbsenAktif + " (Staff)" }; 
+                
+                // Gunakan Jabatan Asli (misal: STAF TU) atau Default KARYAWAN
+                let kelasLaporan = userUser.kelas || 'KARYAWAN';
+
+                let data = { nisn: userUser.username, nama: userUser.nama, kelas: kelasLaporan, role: 'guru', tanggal: todayStr, status_terakhir: tipeAbsenAktif + " (Staff)" }; 
                 if(tipeAbsenAktif === 'Masuk') { data.jam_masuk = serverTimestamp(); data.foto_masuk = url; } 
                 else { data.jam_pulang = serverTimestamp(); data.foto_pulang = url; } 
                 
                 await setDoc(doc(db, "absensi", idDoc), data, {merge: true}); 
-                document.getElementById('status-absen').innerText = "Sudah " + tipeAbsenAktif; 
-                document.getElementById('status-absen').className = "text-[10px] font-bold bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full"; 
+                cekStatusAbsenHariIni();
                 Swal.fire('Mantap!', 'Absensi berhasil. Selamat bekerja!', 'success'); 
             } catch(e) { Swal.fire('Error', e.message, 'error'); } 
         }
@@ -213,5 +243,4 @@
         window.logout = () => { sessionStorage.clear(); localStorage.clear(); window.location.href = 'index.html'; }
     </script>
 </body>
-
 </html>
