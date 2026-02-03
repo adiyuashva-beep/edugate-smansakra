@@ -3,125 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Live - EduGate SMAN 1 Karanganyar</title>
+    <title>EduGate Smart Monitor - SMAN 1 Karanganyar</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
     <style>
+        /* --- VARIABEL WARNA (DINAMIS) --- */
         :root { 
-            --bg-dark: #0b1120; 
-            --card-bg: #151e32; 
-            --neon-blue: #0ea5e9; 
-            --neon-green: #10b981; 
-            --neon-red: #ef4444; 
-            --neon-gold: #f59e0b; 
+            --bg-dark: #020617; 
+            --card-bg: #0f172a; 
+            
+            /* Mode Pagi (Default) */
+            --theme-primary: #38bdf8; /* Biru Langit */
+            --theme-accent: #10b981;  /* Hijau */
+            --theme-danger: #f43f5e;
+            --theme-shadow: rgba(56, 189, 248, 0.4);
         }
-        body { margin: 0; font-family: 'Outfit', sans-serif; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); color: white; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        body::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; pointer-events: none; }
+
+        /* Mode Pulang (Override via Class) */
+        body.mode-pulang {
+            --theme-primary: #f59e0b; /* Orange Senja */
+            --theme-accent: #8b5cf6;  /* Ungu Sore */
+            --theme-danger: #ef4444;
+            --theme-shadow: rgba(245, 158, 11, 0.4);
+        }
+
+        body { margin: 0; font-family: 'Outfit', sans-serif; background: var(--bg-dark); color: white; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: all 1s ease; }
         
-        .header { height: 12vh; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid rgba(14, 165, 233, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 20; position: relative; }
-        .header::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 30%; height: 2px; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); animation: scanningLine 5s linear infinite; }
-        @keyframes scanningLine { 0% { left: 0; width: 0; opacity: 0; } 50% { width: 50%; opacity: 1; } 100% { left: 100%; width: 0; opacity: 0; } }
+        /* BACKGROUND EFFECT */
+        body::before { 
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
+            background-size: 50px 50px; 
+            z-index: -1; pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        /* HEADER */
+        .header { height: 12vh; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); display: flex; justify-content: space-between; align-items: center; padding: 0 40px; border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 50px rgba(0,0,0,0.5); z-index: 20; position: relative; transition: border 1s; }
+        .header::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 30%; height: 3px; background: var(--theme-primary); box-shadow: 0 0 20px var(--theme-primary); animation: scanningLine 6s ease-in-out infinite; transition: background 1s; }
+        @keyframes scanningLine { 0% { left: 0; width: 0; opacity: 0; } 50% { width: 40%; opacity: 1; } 100% { left: 100%; width: 0; opacity: 0; } }
 
         .brand-left { display: flex; align-items: center; gap: 20px; }
-        .logo-sekolah { height: 65px; width: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
-        .text-sekolah h1 { margin: 0; font-size: 1.6em; font-weight: 900; color: white; line-height: 1; letter-spacing: 1px; }
-        .badge-system { color: #94a3b8; font-weight: 600; letter-spacing: 3px; font-size: 0.8em; display: block; margin-top: 5px; }
+        .logo-sekolah { height: 70px; width: auto; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2)); }
+        .text-sekolah h1 { margin: 0; font-size: 1.8em; font-weight: 900; color: white; line-height: 1; letter-spacing: 1px; text-transform: uppercase; }
+        .badge-system { color: var(--theme-primary); font-weight: 700; letter-spacing: 4px; font-size: 0.75em; display: block; margin-top: 5px; text-shadow: 0 0 10px var(--theme-shadow); transition: color 1s; }
 
-        .header-right { display: flex; align-items: center; gap: 25px; }
-        .logo-siganteng { height: 55px; width: auto; filter: drop-shadow(0 0 8px var(--neon-blue)); animation: floatLogo 4s ease-in-out infinite; }
+        .header-right { display: flex; align-items: center; gap: 30px; }
+        /* LOGO EDUGATE */
+        .logo-siganteng { height: 60px; width: auto; filter: drop-shadow(0 0 10px var(--theme-primary)); animation: floatLogo 4s ease-in-out infinite; }
         @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        .jam-digital { text-align: right; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 25px; }
-        .waktu { font-family: 'Share Tech Mono', monospace; font-size: 2.5em; font-weight: 700; line-height: 1; color: var(--neon-blue); text-shadow: 0 0 15px rgba(14, 165, 233, 0.6); }
-        .tanggal { font-size: 0.85em; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
+        .jam-digital { text-align: right; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 30px; }
+        .waktu { font-family: 'Share Tech Mono', monospace; font-size: 3em; font-weight: 700; line-height: 0.9; color: white; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .tanggal { font-size: 0.9em; color: var(--theme-primary); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
         
-        .main-content { flex: 1; display: flex; padding: 20px; gap: 20px; height: 83vh; overflow: hidden; }
-        .card-box { background: var(--card-bg); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .card-box::before { content: ''; position: absolute; top: 0; left: 0; width: 15px; height: 15px; border-top: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue); border-radius: 4px 0 0 0; }
-        .card-box::after { content: ''; position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; border-bottom: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue); border-radius: 0 0 4px 0; }
-
-        .card-header { padding: 15px; font-weight: 800; font-size: 0.9em; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; background: rgba(0,0,0,0.2); }
+        /* LAYOUT */
+        .main-content { flex: 1; display: flex; padding: 25px; gap: 25px; height: 83vh; overflow: hidden; }
+        .card-box { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: all 1s; }
         
-        /* KOLOM KIRI */
-        .col-gasik { flex: 1; border-top: 2px solid var(--neon-green); }
-        .gasik-header { color: var(--neon-green); }
-        .list-container { flex: 1; overflow-y: auto; padding: 10px; }
-        .rank-item { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent); border-radius: 8px; border-left: 2px solid transparent; transition: 0.3s; }
-        .rank-item:hover { background: rgba(255,255,255,0.08); border-left-color: var(--neon-green); }
-        .rank-num { width: 28px; height: 28px; background: #334155; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 12px; font-size: 0.9em; flex-shrink: 0; font-family: 'Share Tech Mono', monospace; }
-        .rank-1 .rank-num { background: var(--neon-gold); color: black; box-shadow: 0 0 15px var(--neon-gold); }
-        .rank-2 .rank-num { background: #cbd5e1; color: black; }
-        .rank-3 .rank-num { background: #b45309; color: white; }
-        .avatar-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); margin-right: 12px; flex-shrink: 0; background: #000; }
-        .rank-nama { font-weight: 600; flex: 1; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e2e8f0; }
-        .rank-jam { color: var(--neon-green); font-weight: 700; font-family: 'Share Tech Mono', monospace; font-size: 1.1em; text-shadow: 0 0 5px rgba(16, 185, 129, 0.5); }
+        .corner-accent { position: absolute; width: 20px; height: 20px; border-color: var(--theme-primary); transition: border-color 1s; }
+        .tl { top: 0; left: 0; border-top: 2px solid; border-left: 2px solid; border-radius: 12px 0 0 0; }
+        .br { bottom: 0; right: 0; border-bottom: 2px solid; border-right: 2px solid; border-radius: 0 0 12px 0; }
 
-        /* KOLOM TENGAH */
-        .col-center { flex: 1.3; display: flex; flex-direction: column; gap: 20px; }
-        .stats-wrapper { flex: 1.5; background: var(--card-bg); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .reactor-ring { position: absolute; width: 210px; height: 210px; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, 0.1); animation: spin 20s linear infinite; z-index: 0; }
-        .reactor-ring::before { content: ''; position: absolute; top: -2px; left: 50%; width: 10px; height: 10px; background: var(--neon-blue); border-radius: 50%; box-shadow: 0 0 15px var(--neon-blue); transform: translateX(-50%); }
-        .donut-chart { position: relative; width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--c) var(--p), #1e293b 0deg); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; transition: 1s; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index: 1; }
-        .donut-inner { width: 88%; height: 88%; background: var(--card-bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .logo-center-donut { position: absolute; width: 60%; height: 60%; opacity: 0.3; animation: breathe 3s ease-in-out infinite; z-index: 0; filter: grayscale(100%) drop-shadow(0 0 5px var(--neon-blue)); }
-        .big-percent { font-size: 2.8em; font-weight: 900; color: white; line-height: 1; position: relative; z-index: 2; text-shadow: 0 0 20px black; font-family: 'Share Tech Mono', monospace; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.1); opacity: 0.5; } }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%; gap: 10px; text-align: center; margin-top: 10px; }
-        .stat-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-item h4 { margin: 0 0 5px 0; font-size: 0.7em; color: #94a3b8; font-weight: 800; letter-spacing: 1px; }
-        .stat-item p { margin: 0; font-size: 1.4em; font-weight: 700; font-family: 'Share Tech Mono', monospace; }
-        .c-hadir { color: var(--neon-green); text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); } 
-        .c-izin { color: var(--neon-gold); } .c-alpha { color: var(--neon-red); }
+        .card-header { padding: 18px; font-weight: 800; font-size: 0.95em; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 2px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--theme-primary); transition: color 1s; }
+        
+        /* KOLOM 1 */
+        .col-kiri { flex: 1; border-top: 3px solid var(--theme-accent); transition: border-color 1s; }
+        .list-container { flex: 1; overflow-y: hidden; padding: 15px; position: relative; }
+        
+        /* Item List (Generic) */
+        .list-row { display: flex; align-items: center; padding: 10px 15px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 8px; border-left: 3px solid transparent; transition: 0.3s; }
+        .list-row:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
+        .list-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 1px solid rgba(255,255,255,0.2); }
+        .list-info { flex: 1; }
+        .list-name { font-weight: 700; font-size: 0.9em; color: #f1f5f9; }
+        .list-sub { font-size: 0.75em; color: #94a3b8; }
+        .list-time { font-family: 'Share Tech Mono'; font-weight: 700; color: var(--theme-accent); font-size: 1.1em; }
 
-        .box-belum { flex: 1; border-top: 2px solid #64748b; }
-        .belum-header { color: #94a3b8; }
-        .scroller-content { flex: 1; overflow: hidden; padding: 10px; position: relative; }
-        .alpha-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 6px; background: rgba(255,255,255,0.02); margin-bottom: 5px; border-left: 2px solid #64748b; }
-        .alpha-nama { font-weight: 600; font-size: 0.9em; color: #cbd5e1; }
+        /* KOLOM 2: CHART */
+        .col-center { flex: 1.4; display: flex; flex-direction: column; gap: 25px; }
+        .stats-wrapper { flex: 1.5; background: rgba(15, 23, 42, 0.6); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        
+        .reactor-ring { position: absolute; width: 240px; height: 240px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.1); animation: spin 30s linear infinite; }
+        .donut-chart { position: relative; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(var(--c) var(--p), #1e293b 0deg); display: flex; align-items: center; justify-content: center; margin-bottom: 25px; transition: 1s; box-shadow: 0 0 40px rgba(0,0,0,0.5); z-index: 1; }
+        .donut-inner { width: 85%; height: 85%; background: #0f172a; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 4px solid rgba(255,255,255,0.03); }
+        .big-percent { font-size: 3.5em; font-weight: 900; color: white; line-height: 0.9; position: relative; z-index: 2; text-shadow: 0 0 20px black; font-family: 'Share Tech Mono', monospace; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%; gap: 15px; text-align: center; margin-top: 10px; }
+        .stat-item { background: rgba(255,255,255,0.02); padding: 15px 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-item h4 { margin: 0 0 8px 0; font-size: 0.7em; color: #94a3b8; font-weight: 800; letter-spacing: 2px; }
+        .stat-item p { margin: 0; font-size: 1.8em; font-weight: 700; font-family: 'Share Tech Mono', monospace; line-height: 1; }
 
-        /* KOLOM KANAN */
-        .col-right-split { flex: 1.5; display: flex; flex-direction: column; gap: 20px; }
-        .box-telat { flex: 1; border: 1px solid rgba(239, 68, 68, 0.3); border-top: 2px solid var(--neon-red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.1) inset; }
-        .telat-header { color: var(--neon-red); }
-        .telat-row { display: flex; align-items: center; padding: 8px; margin-bottom: 5px; background: rgba(239, 68, 68, 0.05); border-left: 3px solid var(--neon-red); border-radius: 6px; }
-        .telat-img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--neon-red); margin-right: 10px; filter: grayscale(1) contrast(1.2); }
-        .telat-time { margin-left: auto; font-family: 'Share Tech Mono', monospace; color: var(--neon-red); font-weight: 700; }
-
-        .box-live { flex: 2.2; border-top: 2px solid var(--neon-blue); }
-        .live-header-big { padding: 15px; font-size: 1.1em; font-weight: 800; color: var(--neon-blue); border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(14, 165, 233, 0.05); display: flex; align-items: center; gap: 10px; }
-        .live-card-big { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent); border-radius: 12px; border-left: 4px solid var(--neon-green); transition: transform 0.3s; }
-        .live-card-big.is-telat { border-left-color: var(--neon-red); background: rgba(239, 68, 68, 0.05); }
-        .live-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); margin-right: 15px; flex-shrink: 0; background: black; }
-        .live-name { font-weight: 700; font-size: 1.1em; color: white; margin-bottom: 2px; text-shadow: 0 2px 4px black; }
-        .live-class { font-size: 0.85em; color: var(--neon-blue); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .live-time { font-family: 'Share Tech Mono', monospace; font-size: 1.4em; font-weight: 800; color: var(--neon-green); text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
-        .live-card-big.is-telat .live-time { color: var(--neon-red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
-
+        /* Box Bawah Tengah (Belum Hadir / Belum Pulang) */
+        .box-middle-bottom { flex: 1; border-top: 3px solid #64748b; }
+        
+        /* KOLOM 3: LIVE FEED */
+        .col-kanan { flex: 1.6; display: flex; flex-direction: column; gap: 25px; }
+        .box-kanan-atas { flex: 1; border: 1px solid rgba(255,255,255,0.05); border-top: 3px solid var(--theme-danger); }
+        .box-live { flex: 2.2; border-top: 3px solid var(--theme-primary); position: relative; transition: border-color 1s; }
+        
+        .live-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 16px; border-left-width: 5px; border-left-style: solid; transition: all 0.5s; position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent); }
+        .live-card.masuk { border-left-color: #10b981; }
+        .live-card.pulang { border-left-color: #f59e0b; }
+        .live-card.izin { border-left-color: #3b82f6; }
+        
+        .live-avatar { width: 65px; height: 65px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); margin-right: 18px; }
+        .live-badge { font-size: 0.65em; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px; letter-spacing: 1px; background: rgba(255,255,255,0.1); }
+        
+        /* ANIMATIONS */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
         .marquee-vertical { animation: scrollUp linear infinite; }
         @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }
 
-        .footer-marquee { height: 5vh; background: #020617; display: flex; align-items: center; border-top: 1px solid var(--neon-blue); z-index: 10; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
-        marquee { font-size: 1.2em; font-weight: 500; color: #f1f5f9; letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; text-shadow: none; }
-        
-        .refresh-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #333; padding: 5px 10px; font-size: 10px; cursor: pointer; border-radius: 4px; opacity: 0.2; transition: opacity 0.3s; }
-        .refresh-btn:hover { opacity: 1; }
+        .footer-marquee { height: 5vh; background: #020617; display: flex; align-items: center; border-top: 1px solid var(--theme-primary); z-index: 10; transition: border-color 1s; }
+        marquee { font-size: 1.1em; font-weight: 600; color: #e2e8f0; letter-spacing: 1.5px; font-family: 'Share Tech Mono', monospace; }
+
+        /* TOMBOL RAHASIA (KECIL DI KANAN BAWAH) */
+        .dev-btn { 
+            position: fixed; 
+            bottom: 5px; 
+            right: 5px; 
+            background: rgba(255,255,255,0.05); 
+            color: #475569; 
+            border: 1px solid #333; 
+            padding: 2px 5px; 
+            font-size: 9px; 
+            z-index: 9999; 
+            cursor: pointer; 
+            border-radius: 3px;
+        }
+        .dev-btn:hover { background: red; color: white; opacity: 1; }
     </style>
 </head>
 <body>
 
-    <button onclick="forceRefreshMaster()" class="refresh-btn">🔄 Reset Cache v3</button>
+    <button onclick="toggleModeManual()" class="dev-btn">⚡ FORCE MODE</button>
 
     <div class="header">
         <div class="brand-left">
-            <img src="logo_sekolah.png" class="logo-sekolah" alt="SMAN 1" onerror="this.style.display='none'">
+            <img src="logo_sekolah.png" class="logo-sekolah" alt="Logo" onerror="this.style.display='none'">
             <div class="text-sekolah">
                 <h1></h1>
-                <span class="badge-system"></span>
+                <span class="badge-system" id="header-subtitle">LIVE MONITORING DASHBOARD</span>
             </div>
         </div>
-        
         <div class="header-right">
             <img src="logo.png" class="logo-siganteng" alt="EduGate" onerror="this.src='https://ui-avatars.com/api/?name=EG&background=transparent&color=fff&size=128'">
             <div class="jam-digital">
@@ -133,80 +161,66 @@
 
     <div class="main-content">
         
-        <div class="card-box col-gasik">
-            <div class="card-header gasik-header"><i class='bx bxs-trophy'></i> TOP 10 GASIK</div>
-            <div class="list-container" id="gasik-list">
-                <p style="text-align:center; padding:20px; opacity:0.5;">Menunggu data...</p>
+        <div class="card-box col-kiri" id="box-kiri">
+            <div class="corner-accent tl"></div>
+            <div class="card-header" id="label-kiri">
+                </div>
+            <div class="list-container">
+                <div class="marquee-vertical" id="list-kiri"></div>
             </div>
         </div>
 
         <div class="col-center">
             <div class="stats-wrapper">
+                <div class="corner-accent br"></div>
                 <div class="reactor-ring"></div>
-                <div class="donut-chart" id="chart-absen" style="--p: 0deg; --c: var(--neon-red);">
+                <div class="donut-chart" id="chart-absen" style="--p: 0deg; --c: var(--theme-accent);">
                     <div class="donut-inner">
-                        <img src="logo.png" class="logo-center-donut" alt="Logo">
                         <span class="big-percent" id="persen-text">0%</span>
-                        <small style="color:#94a3b8; font-size:0.7em; z-index:2; font-weight:700; letter-spacing:1px;">KEHADIRAN</small>
+                        <small style="color:#94a3b8; font-size:0.7em; font-weight:700; margin-top:5px;" id="label-chart">KEHADIRAN</small>
                     </div>
-                </div>
-                
-                <div style="margin-bottom: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; width: 100%;">
-                    <span style="font-size: 0.8em; color: #94a3b8; font-weight: 600; letter-spacing:1px;">TOTAL POPULASI SISWA</span>
-                    <div style="font-size: 1.8em; font-weight: 800; color: white; font-family: 'Share Tech Mono', monospace;" id="total-populasi">...</div>
                 </div>
                 
                 <div class="stat-grid">
-                    <div class="stat-item"><h4 class="c-hadir">HADIR</h4><p id="total-hadir">0</p></div>
-                    <div class="stat-item"><h4 class="c-izin">IZIN</h4><p id="total-izin">0</p></div>
-                    <div class="stat-item"><h4 class="c-alpha">BELUM</h4><p id="total-alpha">0</p></div>
+                    <div class="stat-item"><h4 style="color:#10b981">HADIR</h4><p id="stat-hadir">0</p></div>
+                    <div class="stat-item"><h4 style="color:#f59e0b">PULANG</h4><p id="stat-pulang">0</p></div>
+                    <div class="stat-item"><h4 style="color:#ef4444">BELUM</h4><p id="stat-belum">0</p></div>
                 </div>
-                
-                <div id="data-source-indicator" style="position:absolute; bottom:5px; right:10px; font-size:9px; color:rgba(255,255,255,0.2);">Waiting...</div>
             </div>
 
-            <div class="box-belum">
-                <div class="belum-header">
-                    <span><i class='bx bx-user-x'></i> BELUM HADIR</span>
-                    <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'Share Tech Mono';" id="badge-belum">0</span>
-                </div>
-                <div class="scroller-content">
-                    <div class="marquee-vertical" id="list-belum"></div>
-                    <div id="msg-too-many" style="display:none; text-align:center; padding:20px; color:#64748b; font-size:0.8em;">
-                        Data masih terlalu banyak.<br>List ditampilkan saat sisa < 50.
+            <div class="card-box box-middle-bottom">
+                <div class="card-header" id="label-tengah-bawah">
                     </div>
+                <div class="list-container">
+                    <div class="marquee-vertical" id="list-tengah-bawah"></div>
                 </div>
             </div>
         </div>
 
-        <div class="col-right-split">
-            <div class="box-telat">
-                <div class="telat-header">
-                    <span><i class='bx bxs-alarm-exclamation'></i> TERLAMBAT</span>
-                    <span style="background:rgba(255,0,0,0.2); padding:2px 8px; border-radius:4px; font-family:'Share Tech Mono';" id="badge-telat">0</span>
-                </div>
-                <div class="scroller-content">
-                    <div class="marquee-vertical" id="list-telat"></div>
+        <div class="col-kanan">
+            <div class="card-box box-kanan-atas">
+                <div class="card-header" id="label-kanan-atas">
+                    </div>
+                <div class="list-container">
+                    <div class="marquee-vertical" id="list-kanan-atas"></div>
                 </div>
             </div>
 
-            <div class="box-live">
-                <div class="live-header-big">
-                    <span><i class='bx bxs-camera-movie'></i> LIVE PRESENSI</span>
-                    <span style="font-size:0.7em; font-weight:400; color:#94a3b8; margin-left:auto;"><i class='bx bxs-circle' style="color:red; animation: breathe 1s infinite;"></i> REC</span>
+            <div class="card-box box-live">
+                <div class="card-header">
+                    <span><i class='bx bxs-webcam'></i> LIVE TRAFFIC</span>
+                    <div style="display:flex; align-items:center; gap:5px; margin-left:auto; font-size:0.7em; color:var(--theme-primary);">● REC</div>
                 </div>
-                <div class="scroller-content">
-                    <div class="marquee-vertical" id="live-feed-list"></div>
+                <div class="list-container" style="mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);">
+                    <div class="marquee-vertical" id="live-feed"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="footer-marquee">
-        <marquee scrollamount="8">
-            🚀 <strong>SELAMAT DATANG DI PUSAT MONITORING KEDISIPLINAN SMAN 1 KARANGANYAR</strong> &nbsp;&nbsp; ••• &nbsp;&nbsp; 
-            <span style="color: var(--neon-blue);">BERSAMA EDUGATE</span> <strong> (Education Gateway) KITA WUJUDKAN SEKOLAH DIGITAL BERBASIS DATA ••• DISIPLIN HARI INI ADALAH KUNCI SUKSES MASA DEPAN ••• DATA PRESENSI INI DIPERBAHARUI SECARA LIVE & REALTIME UNTUK TRANSPARANSI PUBLIK <span style="color: var(--neon-green);">REALTIME (LIVE)</span> &nbsp;&nbsp; ••• &nbsp;&nbsp; 
-            MARI WUJUDKAN GENERASI YANG DISIPLIN, BERKARAKTER, DAN BERPRESTASI 🔥
+        <marquee scrollamount="10" id="running-text">
+            🚀 SYSTEM MONITORING ONLINE ••• EDUGATE SMAN 1 KARANGANYAR ••• DATA REALTIME
         </marquee>
     </div>
 
@@ -214,262 +228,232 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // --- 🔒 SATPAM MONITOR (Hanya Admin, Super, BK, Kurikulum) ---
-        const cekSesi = sessionStorage.getItem('user_siganteng');
-        if (!cekSesi) {
-            alert("Akses Ditolak! Harap Login sebagai Admin.");
-            window.location.href = 'index.html';
-        } else {
-            const user = JSON.parse(cekSesi);
-            const allowedRoles = ['admin', 'super', 'bk', 'kurikulum'];
-            if (!allowedRoles.includes(user.role)) {
-                alert("Akses Ditolak! Hanya untuk Monitor Admin.");
-                window.location.href = 'index.html';
-            }
-        }
-        // -------------------------------------------------------------
-
-        // --- KONFIGURASI EDUGATE SMAN 1 KARANGANYAR ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c",
-          authDomain: "edugate-smansakra.firebaseapp.com",
-          projectId: "edugate-smansakra",
-          storageBucket: "edugate-smansakra.firebasestorage.app",
-          messagingSenderId: "181623194937",
-          appId: "1:181623194937:web:d494810276000dceda14e8"
-        };
+        // CONFIG
+        const firebaseConfig = { apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c", authDomain: "edugate-smansakra.firebaseapp.com", projectId: "edugate-smansakra", storageBucket: "edugate-smansakra.firebasestorage.app", messagingSenderId: "181623194937", appId: "1:181623194937:web:d494810276000dceda14e8" };
+        const app = initializeApp(firebaseConfig); const db = getFirestore(app);
         
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const JAM_BATAS_TERLAMBAT = "07:00:00"; 
+        // GLOBAL VARS
+        let currentMode = 'MASUK'; // 'MASUK' or 'PULANG'
+        let forceMode = null; // Untuk tombol darurat
+        let allSiswa = [];
+        let dataAbsen = [];
         const DEFAULT_IMG = "https://cdn-icons-png.flaticon.com/512/847/847969.png";
-        const today = new Date().toLocaleDateString('fr-CA');
+        
+        // === 1. JADWAL OTOMATIS (MODE PULANG) ===
+        function checkAutoMode() {
+            if (forceMode) { setMode(forceMode); return; }
 
-        let allSiswa = [];        
-        let dataAbsenHariIni = []; 
-        let validStudentNISNs = new Set();
+            const now = new Date();
+            const day = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri
+            const hour = now.getHours();
+            const min = now.getMinutes();
+            const totalMin = hour * 60 + min;
 
-        // 1. CACHING MASTER SISWA (OPTIMASI UTAMA 1200 SISWA)
-        async function loadMasterSiswa() {
-            // Cek Cache
-            const cacheKey = 'cache_master_siswa_v3'; // Versi 3 untuk memastikan data baru ter-load
-            const cachedSiswa = localStorage.getItem(cacheKey);
-            const indicator = document.getElementById('data-source-indicator');
-            
-            if(cachedSiswa) {
-                const parsed = JSON.parse(cachedSiswa);
-                // Cek umur cache (24 jam)
-                const now = new Date().getTime();
-                if (now - parsed.timestamp < 24 * 60 * 60 * 1000) {
-                    console.log("⚡ [HEMAT] Menggunakan Cache Lokal (0 Reads)");
-                    indicator.innerText = "Source: Local Cache (Fast)";
-                    allSiswa = parsed.data;
-                    allSiswa.forEach(s => validStudentNISNs.add(s.username));
-                    document.getElementById('total-populasi').innerText = allSiswa.length;
-                    startMonitorAbsen(); // Langsung monitor
-                    return;
-                }
+            // Batas Waktu Pulang (Dalam Menit)
+            // Senin-Kamis (1-4): 15:25 = 925 menit
+            // Jumat (5): 13:55 = 835 menit
+            let isPulangTime = false;
+
+            if (day >= 1 && day <= 4) { // Senin - Kamis
+                if (totalMin >= 925) isPulangTime = true;
+            } else if (day === 5) { // Jumat
+                if (totalMin >= 835) isPulangTime = true;
             }
 
-            console.log("⚠️ [WARNING] Mengambil Master Siswa dari Server (Costly)");
-            indicator.innerText = "Source: Server Fetching...";
-            indicator.style.color = "orange";
-
-            try {
-                // OPTIMASI: HANYA AMBIL ROLE SISWA (Jangan ambil Guru/Admin)
-                const q = query(collection(db, "users"), where("role", "==", "siswa"));
-                const querySnapshot = await getDocs(q); 
-                
-                allSiswa = [];
-                validStudentNISNs.clear();
-
-                querySnapshot.forEach(doc => {
-                    const d = doc.data();
-                    if (d.username) {
-                        const nisnClean = String(d.username).trim().replace(/[^a-zA-Z0-9]/g, '');
-                        if(nisnClean.length > 0) {
-                            validStudentNISNs.add(nisnClean);
-                            allSiswa.push({ username: nisnClean, name: d.name || d.nama || "Siswa", kelas: d.kelas || "-" });
-                        }
-                    }
-                });
-                
-                // Simpan ke Cache
-                localStorage.setItem(cacheKey, JSON.stringify({
-                    timestamp: new Date().getTime(),
-                    data: allSiswa
-                }));
-
-                indicator.innerText = "Source: Server (Cached for next time)";
-                indicator.style.color = "#10b981";
-                document.getElementById('total-populasi').innerText = allSiswa.length;
-                startMonitorAbsen();
-            } catch (error) { 
-                console.error(error); 
-                indicator.innerText = "Error Fetching Data";
+            // Set Mode
+            const targetMode = isPulangTime ? 'PULANG' : 'MASUK';
+            if (currentMode !== targetMode) {
+                setMode(targetMode);
             }
         }
 
-        window.forceRefreshMaster = () => {
-            if(confirm("Download ulang data siswa terbaru? (Membutuhkan Kuota)")) {
-                localStorage.removeItem('cache_master_siswa_v3');
-                location.reload();
-            }
-        }
-
-        // 2. MONITORING (REALTIME)
-        function startMonitorAbsen() {
-            const q = query(collection(db, "absensi"), where("tanggal", "==", today));
-
-            onSnapshot(q, (snapshot) => {
-                let tempAbsen = [];
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    const urlFoto = d.foto_masuk || d.foto || d.imageUrl || DEFAULT_IMG;
-                    
-                    if(d.nisn) {
-                        const nisnBersih = String(d.nisn).trim().replace(/[^a-zA-Z0-9]/g, '');
-                        // FIX LOGIC: Hanya proses jika NISN ada di daftar siswa (Anti Guru)
-                        if(validStudentNISNs.has(nisnBersih)) {
-                            tempAbsen.push({
-                                ...d,
-                                nisn_clean: nisnBersih,
-                                jam_display: formatJam(d),
-                                nama_display: d.nama || "Siswa",
-                                kelas_display: d.kelas || "-",
-                                foto_url: urlFoto
-                            });
-                        }
-                    }
-                });
-
-                dataAbsenHariIni = tempAbsen;
-                updateTampilanLayar(); 
-            });
-        }
-
-        function updateTampilanLayar() {
-            // FIX LOGIC: Filter status
-            const listHadir = dataAbsenHariIni.filter(d => d.status_terakhir.includes("Masuk") || d.status_terakhir.includes("Hadir") || d.status_terakhir.includes("Pulang"));
-            const listIzin = dataAbsenHariIni.filter(d => d.status_terakhir.includes("Sakit") || d.status_terakhir.includes("Izin"));
+        function setMode(mode) {
+            currentMode = mode;
+            const body = document.body;
             
-            const nisnHadir = dataAbsenHariIni.map(d => d.nisn_clean); 
-            
-            const totalPopulasi = allSiswa.length > 0 ? allSiswa.length : 0; 
-            const countIzin = listIzin.length;
-            const countHadir = listHadir.length;
-            const totalMasuk = countHadir + countIzin;
-            
-            // Perhitungan list belum hadir dilakukan di memori
-            const listBelum = allSiswa.filter(s => !nisnHadir.includes(s.username));
-
-            document.getElementById('total-populasi').innerText = totalPopulasi;
-            document.getElementById('total-hadir').innerText = countHadir;
-            document.getElementById('total-izin').innerText = countIzin;
-            document.getElementById('total-alpha').innerText = listBelum.length;
-
-            let rawPercent = totalPopulasi > 0 ? (totalMasuk / totalPopulasi) * 100 : 0;
-            let derajat = rawPercent * 3.6;
-            if (rawPercent > 100) rawPercent = 100;
-
-            let warnaDonat = rawPercent > 75 ? '#10b981' : (rawPercent > 40 ? '#f59e0b' : '#ef4444'); 
-            
-            const elText = document.getElementById('persen-text');
-            if(elText) {
-                elText.innerText = rawPercent.toFixed(1) + "%";
-                elText.style.color = warnaDonat;
-                elText.style.textShadow = `0 0 10px ${warnaDonat}`;
-            }
-
-            const elChart = document.getElementById('chart-absen');
-            if(elChart) { elChart.style.background = `conic-gradient(${warnaDonat} ${derajat}deg, #0f172a 0deg)`; }
-
-            // UPDATE LISTS
-            
-            // ANTI-CRASH STRATEGY: 
-            const containerBelum = document.getElementById('list-belum');
-            const msgTooMany = document.getElementById('msg-too-many');
-
-            document.getElementById('badge-belum').innerText = listBelum.length;
-
-            if(listBelum.length > 50) {
-                containerBelum.innerHTML = ''; 
-                containerBelum.style.display = 'none';
-                msgTooMany.style.display = 'block';
-                msgTooMany.innerHTML = `Masih ada <strong>${listBelum.length}</strong> siswa belum hadir.<br>List disembunyikan agar performa lancar.`;
+            if (mode === 'PULANG') {
+                body.classList.add('mode-pulang');
+                document.getElementById('header-subtitle').innerText = "";
+                document.getElementById('running-text').innerHTML = "🛑 <strong>PERHATIAN:</strong> PASTIKAN ANDA SUDAH MELAKUKAN TAP-OUT (ABSEN PULANG) SEBELUM MENINGGALKAN AREA SEKOLAH ••• HATI-HATI DI JALAN DAN SAMPAI JUMPA BESOK 👋";
             } else {
-                containerBelum.style.display = 'block';
-                msgTooMany.style.display = 'none';
-                renderScrollList(listBelum, 'list-belum', 'belum');
+                body.classList.remove('mode-pulang');
+                document.getElementById('header-subtitle').innerText = "";
+                document.getElementById('running-text').innerHTML = "🚀 <strong>SELAMAT DATANG:</strong> MARI WUJUDKAN DISIPLIN WAKTU ••• EDUGATE SYSTEM ONLINE ••• PRESENSI REALTIME";
+            }
+            renderAllData();
+        }
+
+        window.toggleModeManual = () => {
+            forceMode = currentMode === 'MASUK' ? 'PULANG' : 'MASUK';
+            setMode(forceMode);
+            console.log("Mode dipaksa ke: " + forceMode);
+        }
+
+        // === 2. DATA LOADERS ===
+        async function loadMaster() {
+            const cacheKey = 'master_siswa_v2';
+            const cached = localStorage.getItem(cacheKey);
+            if(cached) {
+                allSiswa = JSON.parse(cached);
+                initListener();
+            } else {
+                const q = query(collection(db, "users"), where("role","==","siswa"));
+                const snap = await getDocs(q);
+                snap.forEach(d => {
+                    const dt = d.data();
+                    if(dt.username) allSiswa.push({ nisn: dt.username, nama: dt.nama||dt.name, kelas: dt.kelas });
+                });
+                localStorage.setItem(cacheKey, JSON.stringify(allSiswa));
+                initListener();
+            }
+        }
+
+        function initListener() {
+            const todayStr = new Date().toLocaleDateString('fr-CA');
+            const q = query(collection(db, "absensi"), where("tanggal", "==", todayStr));
+            
+            onSnapshot(q, (snap) => {
+                dataAbsen = [];
+                snap.forEach(d => dataAbsen.push(d.data()));
+                renderAllData();
+            });
+        }
+
+        // === 3. RENDER LOGIC ===
+        function renderAllData() {
+            const hadir = dataAbsen.filter(d => !d.status_terakhir.includes("Izin") && !d.status_terakhir.includes("Sakit"));
+            const pulang = dataAbsen.filter(d => d.status_terakhir.includes("Pulang"));
+            const belumHadir = allSiswa.filter(s => !dataAbsen.some(a => a.nisn === s.nisn));
+            const masihDiSekolah = hadir.filter(h => !pulang.some(p => p.nisn === h.nisn));
+
+            document.getElementById('stat-hadir').innerText = hadir.length;
+            document.getElementById('stat-pulang').innerText = pulang.length;
+            document.getElementById('stat-belum').innerText = belumHadir.length;
+
+            let total = allSiswa.length || 1;
+            let percent = 0;
+            let chartColor = '#38bdf8';
+
+            if (currentMode === 'MASUK') {
+                percent = (hadir.length / total) * 100;
+                chartColor = '#10b981'; // Hijau
+                document.getElementById('label-chart').innerText = "KEHADIRAN";
+            } else {
+                percent = (pulang.length / total) * 100;
+                chartColor = '#f59e0b'; // Orange
+                document.getElementById('label-chart').innerText = "KEPULANGAN";
+            }
+            
+            document.getElementById('persen-text').innerText = percent.toFixed(1) + "%";
+            document.getElementById('persen-text').style.color = chartColor;
+            document.getElementById('chart-absen').style.background = `conic-gradient(${chartColor} ${percent * 3.6}deg, #1e293b 0deg)`;
+
+            // KOLOM KIRI (BOX 1)
+            const labelKiri = document.getElementById('label-kiri');
+            if (currentMode === 'MASUK') {
+                labelKiri.innerHTML = "<i class='bx bxs-trophy'></i> TOP 10 GASIK";
+                const sorted = [...hadir].sort((a,b) => (a.jam_masuk?.seconds||0) - (b.jam_masuk?.seconds||0)).slice(0, 15);
+                renderList(sorted, 'list-kiri', 'normal', 'jam_masuk');
+            } else {
+                labelKiri.innerHTML = "<i class='bx bxs-user-detail'></i> MASIH DI SEKOLAH";
+                renderList(masihDiSekolah, 'list-kiri', 'normal', 'jam_masuk'); 
             }
 
-            let sortedByTime = [...listHadir].sort((a,b) => a.jam_display.localeCompare(b.jam_display));
-            renderGasik(sortedByTime.slice(0, 10));
-
-            const listTelat = listHadir.filter(d => d.jam_display > JAM_BATAS_TERLAMBAT);
-            listTelat.sort((a,b) => b.jam_display.localeCompare(a.jam_display));
-            renderScrollList(listTelat, 'list-telat', 'telat');
-            document.getElementById('badge-telat').innerText = listTelat.length;
-
-            // Live Feed: Campuran Hadir & Izin, tapi utamakan yang baru masuk
-            const listLive = [...listHadir, ...listIzin].sort((a,b) => b.jam_display.localeCompare(a.jam_display));
-            renderLiveFeed(listLive);
-        }
-        
-        function renderGasik(data) {
-            const el = document.getElementById('gasik-list');
-            el.innerHTML = '';
-            if(data.length === 0) { el.innerHTML = '<p style="text-align:center; padding:20px; opacity:0.5;">Belum ada data.</p>'; return; }
-            data.forEach((d, i) => {
-                let cls = i===0 ? 'rank-1' : (i===1 ? 'rank-2' : (i===2 ? 'rank-3' : ''));
-                el.insertAdjacentHTML('beforeend', `<div class="rank-item ${cls}"><div class="rank-num">${i+1}</div><img src="${d.foto_url}" class="avatar-img" onerror="this.src='${DEFAULT_IMG}'"><div class="rank-nama">${d.nama_display}<br><span style="font-size:0.75em; opacity:0.7;">${d.kelas_display}</span></div><div class="rank-jam">${d.jam_display}</div></div>`);
-            });
-        }
-
-        function renderScrollList(data, id, type) {
-            const container = document.getElementById(id);
-            container.innerHTML = ''; 
-            if(data.length === 0) {
-                let msg = type === 'telat' ? 'Nihil (Tertib Semua)' : 'Semua Hadir!';
-                container.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-style:italic;">${msg}</div>`;
-                container.style.animation = 'none'; return;
+            // KOLOM TENGAH BAWAH (BOX 2)
+            const labelTengah = document.getElementById('label-tengah-bawah');
+            if (currentMode === 'MASUK') {
+                labelTengah.innerHTML = "<i class='bx bx-user-x'></i> BELUM HADIR";
+                renderSimpleList(belumHadir, 'list-tengah-bawah');
+            } else {
+                labelTengah.innerHTML = "<i class='bx bxs-error'></i> BELUM TAP-OUT";
+                renderSimpleList(masihDiSekolah, 'list-tengah-bawah');
             }
-            let durasi = data.length * 2; if(durasi < 10) durasi = 10; 
-            container.style.animation = `scrollUp ${durasi}s linear infinite`;
+
+            // KOLOM KANAN ATAS (BOX 3)
+            const labelKananAtas = document.getElementById('label-kanan-atas');
+            if (currentMode === 'MASUK') {
+                labelKananAtas.innerHTML = "<i class='bx bxs-alarm-exclamation'></i> TERLAMBAT";
+                const batas = 7*3600; // Dummy
+                const telat = hadir.filter(d => getJamStr(d.jam_masuk) > "07:00"); 
+                renderList(telat, 'list-kanan-atas', 'danger', 'jam_masuk');
+            } else {
+                labelKananAtas.innerHTML = "<i class='bx bx-history'></i> BARU SAJA PULANG";
+                const recentPulang = [...pulang].sort((a,b) => (b.jam_pulang?.seconds||0) - (a.jam_pulang?.seconds||0)).slice(0, 10);
+                renderList(recentPulang, 'list-kanan-atas', 'highlight', 'jam_pulang');
+            }
+
+            // LIVE FEED (BOX 4)
+            let feedData = [...dataAbsen];
+            if (currentMode === 'PULANG') {
+                 feedData.sort((a,b) => {
+                     const timeA = a.jam_pulang?.seconds || a.jam_masuk?.seconds || 0;
+                     const timeB = b.jam_pulang?.seconds || b.jam_masuk?.seconds || 0;
+                     return timeB - timeA;
+                 });
+            } else {
+                feedData.sort((a,b) => (b.jam_masuk?.seconds||0) - (a.jam_masuk?.seconds||0));
+            }
+            renderLiveCards(feedData.slice(0, 15), 'live-feed');
+        }
+
+        function renderList(data, containerId, style, timeField) {
+            const c = document.getElementById(containerId);
+            c.innerHTML = '';
+            if(data.length === 0) { c.innerHTML = '<div style="text-align:center; opacity:0.5; padding:10px;">Data Kosong</div>'; return; }
+            let scrollDur = data.length * 2.5; if(scrollDur<10) scrollDur=10;
+            c.style.animation = `scrollUp ${scrollDur}s linear infinite`;
             data.forEach(d => {
-                if(type === 'telat') {
-                    container.insertAdjacentHTML('beforeend', `<div class="telat-row"><img src="${d.foto_url}" class="telat-img" onerror="this.src='${DEFAULT_IMG}'"><div><div class="alpha-nama">${d.nama_display}</div><div class="alpha-kelas">${d.kelas_display}</div></div><div class="telat-time">${d.jam_display}</div></div>`);
-                } else {
-                    container.insertAdjacentHTML('beforeend', `<div class="alpha-row"><div><div class="alpha-nama">${d.name}</div><div class="alpha-kelas" style="font-size:0.7em; color:#94a3b8;">${d.kelas}</div></div></div>`);
-                }
+                const jam = getJamStr(d[timeField]);
+                const img = d.foto_masuk || DEFAULT_IMG;
+                let borderClr = 'transparent';
+                if(style === 'danger') borderClr = '#ef4444';
+                if(style === 'highlight') borderClr = '#f59e0b';
+                c.innerHTML += `<div class="list-row" style="border-left-color:${borderClr}"><img src="${img}" class="list-img" onerror="this.src='${DEFAULT_IMG}'"><div class="list-info"><div class="list-name">${d.nama}</div><div class="list-sub">${d.kelas}</div></div><div class="list-time" style="color:${style==='danger'?'#ef4444':(style==='highlight'?'#f59e0b':'#38bdf8')}">${jam}</div></div>`;
             });
-            if(data.length > 5) container.innerHTML += container.innerHTML;
+            if(data.length > 5) c.innerHTML += c.innerHTML;
         }
 
-        function renderLiveFeed(data) {
-            const container = document.getElementById('live-feed-list');
-            container.innerHTML = '';
-            if(data.length === 0) { container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Menunggu presensi...</div>'; return; }
-            let durasi = data.length * 3; if(durasi < 15) durasi = 15;
-            container.style.animation = `scrollUp ${durasi}s linear infinite`;
+        function renderSimpleList(data, containerId) {
+            const c = document.getElementById(containerId);
+            c.innerHTML = '';
+            if(data.length === 0) { c.innerHTML = '<div style="text-align:center; opacity:0.5; padding:10px;">Nihil</div>'; return; }
+            let scrollDur = data.length * 2; if(scrollDur<10) scrollDur=10;
+            c.style.animation = `scrollUp ${scrollDur}s linear infinite`;
             data.forEach(d => {
-                const isTelat = d.jam_display > JAM_BATAS_TERLAMBAT && !d.status_terakhir.includes("Izin") && !d.status_terakhir.includes("Sakit");
-                const statusClass = isTelat ? 'is-telat' : '';
-                container.insertAdjacentHTML('beforeend', `<div class="live-card-big ${statusClass}"><img src="${d.foto_url}" class="live-img" onerror="this.src='${DEFAULT_IMG}'"><div class="live-info"><div class="live-name">${d.nama_display}</div><div class="live-class">${d.kelas_display}</div></div><div class="live-time">${d.jam_display}</div></div>`);
+                const nama = d.nama || d.name;
+                c.innerHTML += `<div class="list-row"><div class="list-name" style="font-size:0.8em">${nama}</div><div class="list-sub">${d.kelas}</div></div>`;
             });
-            if(data.length > 6) container.innerHTML += container.innerHTML;
+            if(data.length > 5) c.innerHTML += c.innerHTML;
         }
 
-        function formatJam(data) {
-            if (data.jam_masuk && data.jam_masuk.seconds) { const d = new Date(data.jam_masuk.seconds * 1000); return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12: false}).replace('.', ':'); }
-            if (typeof data.jam_masuk === 'string') return data.jam_masuk.substring(0,5);
-            return "00:00"; 
+        function renderLiveCards(data, containerId) {
+            const c = document.getElementById(containerId);
+            c.innerHTML = '';
+            let scrollDur = data.length * 3.5; if(scrollDur<15) scrollDur=15;
+            c.style.animation = `scrollUp ${scrollDur}s linear infinite`;
+            data.forEach(d => {
+                let status = 'MASUK'; let cls = 'masuk'; let time = getJamStr(d.jam_masuk); let img = d.foto_masuk || DEFAULT_IMG;
+                if (d.status_terakhir.includes('Pulang')) { status = 'PULANG'; cls = 'pulang'; time = getJamStr(d.jam_pulang); img = d.foto_pulang || img; } 
+                else if (d.status_terakhir.includes('Izin')) { status = 'IZIN'; cls = 'izin'; }
+                c.innerHTML += `<div class="live-card ${cls}"><img src="${img}" class="live-avatar" onerror="this.src='${DEFAULT_IMG}'"><div class="list-info"><div class="list-name" style="font-size:1.1em">${d.nama}</div><div class="list-sub" style="font-weight:700; color:#94a3b8;">${d.kelas}</div><span class="live-badge">${status}</span></div><div class="list-time" style="font-size:1.5em">${time}</div></div>`;
+            });
+            if(data.length > 4) c.innerHTML += c.innerHTML;
         }
 
-        setInterval(() => { const now = new Date(); document.getElementById('jam-real').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); document.getElementById('tgl-real').innerText = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'}); }, 1000);
-        
-        document.addEventListener("DOMContentLoaded", loadMasterSiswa);
+        function getJamStr(timestamp) {
+            if(!timestamp) return "--:--";
+            if(timestamp.seconds) return new Date(timestamp.seconds*1000).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', hour12:false}).replace('.',':');
+            return String(timestamp).substring(0,5);
+        }
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('jam-real').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('tgl-real').innerText = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
+            checkAutoMode();
+        }, 1000);
+
+        loadMaster();
     </script>
 </body>
 </html>
