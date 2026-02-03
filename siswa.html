@@ -302,7 +302,23 @@
         window.syncAdminSettings = () => onSnapshot(doc(db,"pengaturan","sekolah"),d=>{if(d.exists()){const c=d.data();if(c.lokasi_lat)SEKOLAH_LAT=c.lokasi_lat;if(c.lokasi_lng)SEKOLAH_LNG=c.lokasi_lng;}});
 
         // --- ABSENSI ---
-        window.klikMasuk = () => { if(validasiGPS()) bukaCam("Masuk"); }
+        window.klikMasuk = () => {
+            // ⏰ SATPAM WAKTU: Cek Jam 05:55
+            const now = new Date();
+            const curTime = now.getHours() * 60 + now.getMinutes(); 
+            const openTime = 5 * 60 + 55; // 05:55 (355 menit)
+
+            if (curTime < openTime) {
+                return Swal.fire({
+                    icon: 'info', title: 'Belum Waktunya! 😅',
+                    text: 'Presensi Masuk baru dibuka pukul 05:55 WIB.', confirmButtonColor: '#3b82f6'
+                });
+            }
+
+            // Lanjut ke GPS
+            if(validasiGPS()) bukaCam("Masuk"); 
+        }
+
         window.klikPulang = () => {
             if(!validasiGPS()) return;
             Swal.fire({
