@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kesiswaan (BK) - EduGate SMAN 1 Karanganyar</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f1f5f9; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .nav-item.active { background: rgba(16, 185, 129, 0.1); border-right: 4px solid #10b981; color: #34d399; }
+        
+        /* Table Optimization ala Pejagoan */
+        .table-sticky th { position: sticky; top: 0; z-index: 30; background: #1e293b; border-bottom: 2px solid #334155; }
+        .table-sticky td:first-child, .table-sticky th:first-child { position: sticky; left: 0; z-index: 40; background: #0f172a; border-right: 1px solid #334155; }
+
+        .bg-weekend { background-color: #1e293b; color: #475569; }
+        .bg-hadir { background-color: #064e3b; color: #a7f3d0; border: 0.1px solid #065f46; }
+        .bg-dispen { background-color: #4c1d95; color: #ddd6fe; font-weight: 900; }
+        .bg-sakit { background-color: #1e3a8a; color: #bfdbfe; font-weight: 900; }
+        .bg-izin { background-color: #713f12; color: #fef08a; font-weight: 900; }
+        .bg-alpha { background-color: #450a0a; color: #fca5a5; font-weight: 900; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm">
+
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6">
+            <h1 class="font-black text-2xl tracking-tighter text-emerald-500 italic">EduGate</h1>
+            <p class="text-[10px] text-slate-500 tracking-widest uppercase mt-1">SMAN 1 Karanganyar</p>
+            <div class="mt-2 inline-block px-2 py-1 rounded bg-emerald-900/30 text-emerald-400 text-[9px] font-bold border border-emerald-800 uppercase">Panel BK & Kesiswaan</div>
+        </div>
+
+        <nav class="flex-1 space-y-1 px-3 mt-4 overflow-y-auto hide-scroll">
+            <button onclick="nav('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </button>
+            <button onclick="nav('alpha')" id="nav-alpha" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="user-x" class="w-5 h-5 text-rose-500"></i> Monitoring Alpha
+            </button>
+            <button onclick="nav('keluar')" id="nav-keluar" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="door-open" class="w-5 h-5"></i> Izin Keluar-Masuk
+            </button>
+            <button onclick="nav('riwayat')" id="nav-riwayat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="archive" class="w-5 h-5"></i> Arsip Sakit & Izin
+            </button>
+            <button onclick="nav('rekap')" id="nav-rekap" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i> Rekap Detail Jam
+            </button>
+            <button onclick="nav('dispen')" id="nav-dispen" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="file-badge-2" class="w-5 h-5"></i> Kelola Dispensasi
+            </button>
+            <button onclick="nav('mbg')" id="nav-mbg" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="utensils" class="w-5 h-5"></i> Program MBG
+            </button>
+            <div class="my-4 border-t border-slate-800"></div>
+            <button onclick="nav('libur')" id="nav-libur" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white rounded-lg transition font-bold">
+                <i data-lucide="calendar-off" class="w-5 h-5"></i> Hari Libur
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-900/20 text-red-500 rounded-lg font-bold uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition">
+                <i data-lucide="power" class="w-4 h-4"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-8 relative">
+        
+        <div id="view-dashboard" class="space-y-6 fade-in">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter">Live Monitoring</h2>
+                    <p class="text-slate-400 text-sm">Waktu Sistem: <span id="jam-real" class="font-mono text-emerald-400 font-bold">00:00:00</span></p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="tarikDataSiswa(true)" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-[10px] uppercase border border-slate-700">Refresh Master</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl cursor-pointer hover:border-emerald-500 transition" onclick="nav('dashboard')"><p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Hadir</p><h3 class="text-3xl font-black text-emerald-400 mt-1" id="stat-hadir">0</h3></div>
+                <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl cursor-pointer hover:border-blue-500 transition" onclick="nav('riwayat')"><p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sakit/Izin</p><h3 class="text-3xl font-black text-blue-400 mt-1" id="stat-izin">0</h3></div>
+                <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl cursor-pointer hover:border-rose-500 transition" onclick="nav('alpha')"><p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Belum Hadir</p><h3 class="text-3xl font-black text-rose-500 mt-1" id="stat-alpha">0</h3></div>
+                <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl"><p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Total Siswa</p><h3 class="text-3xl font-black text-white mt-1" id="stat-total">0</h3></div>
+            </div>
+
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto max-h-[450px]">
+                    <table class="w-full text-left text-slate-400">
+                        <thead class="bg-slate-950 text-[10px] uppercase font-bold text-slate-500 sticky top-0">
+                            <tr><th class="p-4">Jam In</th><th class="p-4">Siswa</th><th class="p-4">Kelas</th><th class="p-4">Status</th><th class="p-4 text-center">Foto</th></tr>
+                        </thead>
+                        <tbody id="tabel-live" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-alpha" class="hidden space-y-6 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter text-rose-500">Laporan Alpha Hari Ini</h2>
+                    <p class="text-slate-400 text-sm">Siswa yang tidak terdeteksi presensi apapun sampai saat ini.</p>
+                </div>
+                <div class="flex gap-2 bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-2xl">
+                    <select id="filter-kelas-alpha" onchange="loadSiswaAlpha()" class="bg-slate-800 text-white text-[10px] rounded-lg px-3 py-2 outline-none border border-slate-700 font-bold">
+                        <option value="">SEMUA KELAS</option>
+                    </select>
+                </div>
+            </div>
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto h-[65vh]">
+                    <table id="table-alpha" class="w-full text-left">
+                        <thead class="bg-slate-950 text-[10px] uppercase font-bold text-slate-500 sticky top-0">
+                            <tr><th class="p-4">No</th><th class="p-4">NISN</th><th class="p-4">Nama Siswa</th><th class="p-4">Kelas</th><th class="p-4 text-center">Tindakan</th></tr>
+                        </thead>
+                        <tbody id="tbody-alpha" class="divide-y divide-slate-800 text-slate-400">
+                            <tr><td colspan="5" class="p-20 text-center animate-pulse italic">Memproses Data Alpha...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-rekap" class="hidden space-y-6 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
+                <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter">Rekap Detail Jam</h2>
+                <div class="flex flex-wrap gap-2 bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xl">
+                    <select id="pilih-bulan" class="bg-slate-800 text-white text-[10px] rounded-lg px-3 py-2 outline-none border border-slate-700 font-bold"></select>
+                    <select id="pilih-tahun" class="bg-slate-800 text-white text-[10px] rounded-lg px-3 py-2 outline-none border border-slate-700 font-bold"></select>
+                    <select id="pilih-kelas" class="bg-slate-800 text-white text-[10px] rounded-lg px-3 py-2 outline-none border border-slate-700 font-bold"><option value="">- KELAS -</option></select>
+                    <button onclick="loadRekap()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition active:scale-95">Tampilkan</button>
+                </div>
+            </div>
+            <div class="flex-1 bg-slate-900 rounded-2xl border border-slate-800 overflow-auto relative h-[70vh] shadow-2xl">
+                <table id="tabel-rekap" class="w-full text-center text-[10px] border-collapse table-sticky whitespace-nowrap">
+                    <thead class="text-slate-300 font-bold uppercase tracking-tighter" id="thead-rekap"></thead>
+                    <tbody id="tbody-rekap" class="text-slate-400 divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-keluar" class="hidden space-y-6 fade-in"><div class="p-10 text-center text-slate-500">Panel Keluar Gerbang</div></div>
+        <div id="view-riwayat" class="hidden space-y-6 fade-in"><div class="p-10 text-center text-slate-500">Panel Arsip Sakit/Izin</div></div>
+        <div id="view-dispen" class="hidden space-y-6 fade-in"><div class="p-10 text-center text-slate-500">Panel Dispensasi</div></div>
+        <div id="view-mbg" class="hidden space-y-6 fade-in"><div class="p-10 text-center text-slate-500">Panel MBG</div></div>
+        <div id="view-libur" class="hidden space-y-6 fade-in"><div class="p-10 text-center text-slate-500">Panel Hari Libur</div></div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, onSnapshot, doc, setDoc, addDoc, deleteDoc, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // CONFIG FIREBASE (EDUGATE SMANSAKRA)
+        const firebaseConfig = { apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c", authDomain: "edugate-smansakra.firebaseapp.com", projectId: "edugate-smansakra", storageBucket: "edugate-smansakra.firebasestorage.app", messagingSenderId: "181623194937", appId: "1:181623194937:web:d494810276000dceda14e8" };
+        const app = initializeApp(firebaseConfig); const db = getFirestore(app);
+
+        let listSiswa = []; let mapKelas = {}; let cacheAbsenHariIni = {}; let cacheHariLibur = {}; 
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            setupDropdown();
+            try {
+                await tarikDataSiswa(); 
+                pantauRealtime();
+                loadHariLibur(); 
+            } catch (e) { console.error("Error Initializing:", e); } 
+            finally { if(document.getElementById('loading')) document.getElementById('loading').style.display = 'none'; }
+        });
+
+        // FUNGSI NAVIGASI YANG AMAN
+        window.nav = (v) => { 
+            // 1. Sembunyikan semua view
+            document.querySelectorAll('[id^="view-"]').forEach(e => e.classList.add('hidden')); 
+            // 2. Nonaktifkan semua menu navigasi
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); 
+            
+            // 3. Tampilkan view tujuan
+            const currentView = document.getElementById('view-'+v);
+            if(currentView) currentView.classList.remove('hidden'); 
+            
+            // 4. Aktifkan menu tujuan
+            const currentNav = document.getElementById('nav-'+v);
+            if(currentNav) currentNav.classList.add('active'); 
+
+            // 5. Jika masuk ke view Alpha, jalankan load
+            if(v === 'alpha') {
+                // Beri sedikit delay biar transisi CSS halus dan nggak nge-lag
+                setTimeout(() => loadSiswaAlpha(), 50);
+            }
+        }
+
+        // --- OPTIMIZED ALPHA LOGIC (ANTI FREEZE) ---
+        window.loadSiswaAlpha = () => {
+            const filterKelas = document.getElementById('filter-kelas-alpha').value;
+            const tbody = document.getElementById('tbody-alpha');
+            
+            if (!listSiswa.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center">Data Master Siswa Belum Siap. Silakan Refresh Master.</td></tr>';
+                return;
+            }
+
+            // Gunakan Array Filter & Sort yang Efisien
+            const daftarAlpha = listSiswa.filter(s => {
+                const sudahAbsen = cacheAbsenHariIni[s.nisn];
+                const matchKelas = filterKelas === "" || s.kelas === filterKelas;
+                return !sudahAbsen && matchKelas;
+            });
+
+            if(daftarAlpha.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center italic text-emerald-500 font-bold uppercase tracking-widest">Alhamdulillah, Semua Sudah Presensi!</td></tr>';
+                return;
+            }
+
+            // OPTIMASI: Gunakan Array Buffer (Satu kali render DOM)
+            let htmlRows = [];
+            daftarAlpha.sort((a,b) => a.nama.localeCompare(b.nama)).forEach((s, idx) => {
+                const pesan = `Assalamu'alaikum Bapak/Ibu, menginformasikan bahwa ananda *${s.nama}* (${s.kelas}) hingga pukul ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} WIB belum melakukan presensi di SiGanteng. Mohon konfirmasinya. Terima kasih.`;
+                const linkWA = `https://wa.me/${s.hp || ''}?text=${encodeURIComponent(pesan)}`;
+                
+                htmlRows.push(`
+                    <tr class="border-b border-slate-800 hover:bg-rose-900/10 transition">
+                        <td class="p-4 text-slate-500 font-mono">${idx+1}</td>
+                        <td class="p-4 text-slate-500 font-mono">${s.nisn}</td>
+                        <td class="p-4 text-white font-black uppercase tracking-tighter">${s.nama}</td>
+                        <td class="p-4 font-bold text-slate-500 text-[10px]">${s.kelas}</td>
+                        <td class="p-4 text-center">
+                            <a href="${linkWA}" target="_blank" class="inline-flex bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase items-center gap-2 transition active:scale-95">
+                                <i data-lucide="message-circle" class="w-3 h-3"></i> WA Ortu
+                            </a>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            // TEMPEL SEKALIGUS KE DOM (SANGAT CEPAT)
+            tbody.innerHTML = htmlRows.join('');
+            lucide.createIcons();
+        }
+
+        // --- CORE FIREBASE FUNCTIONS ---
+        window.tarikDataSiswa = async (f = false) => {
+            const ck = 'master_siswa_bk_v6'; if(f) localStorage.removeItem(ck);
+            const c = localStorage.getItem(ck);
+            if(c) { 
+                const p = JSON.parse(c); listSiswa = p.listSiswa; mapKelas = p.mapKelas; 
+                updateUIKelas(); return; 
+            }
+            
+            const q = query(collection(db, "users"), where("role", "==", "siswa"));
+            const s = await getDocs(q);
+            listSiswa = []; mapKelas = {};
+            s.forEach(doc => {
+                const u = doc.data(); 
+                if(u.kelas && u.kelas !== '-') {
+                    const nisn = String(u.username).trim(); 
+                    const kls = String(u.kelas).trim().toUpperCase();
+                    const obj = { nama: u.nama, nisn, kelas: kls, hp: u.nomor_hp || u.whatsapp || "" }; 
+                    listSiswa.push(obj);
+                    if(!mapKelas[kls]) mapKelas[kls] = []; mapKelas[kls].push(obj);
+                }
+            });
+            localStorage.setItem(ck, JSON.stringify({listSiswa, mapKelas})); 
+            updateUIKelas();
+        }
+
+        function pantauRealtime() {
+            const today = new Date().toLocaleDateString('fr-CA');
+            const q = query(collection(db, "absensi"), where("tanggal", "==", today));
+            onSnapshot(q, (snap) => {
+                let hadir=0, izin=0; let logs=[]; cacheAbsenHariIni = {};
+                snap.forEach(doc => {
+                    const d = doc.data(); cacheAbsenHariIni[d.nisn] = d;
+                    const st = d.status_terakhir || "";
+                    if(st.includes("Masuk") || st.includes("Hadir") || st.includes("Terlambat") || st.includes("Kiosk") || st.includes("Kembali") || st.includes("Pulang")) hadir++;
+                    else if(st.includes("Sakit") || st.includes("Izin")) izin++;
+                    logs.push(d);
+                });
+                
+                // Update Dashboard Stats
+                const hEl = document.getElementById('stat-hadir'); if(hEl) hEl.innerText = hadir;
+                const iEl = document.getElementById('stat-izin'); if(iEl) iEl.innerText = izin;
+                const tEl = document.getElementById('stat-total'); if(tEl) tEl.innerText = listSiswa.length;
+                const aEl = document.getElementById('stat-alpha'); if(aEl) aEl.innerText = listSiswa.length - (hadir+izin);
+
+                // Update Live Table
+                const tbl = document.getElementById('tabel-live'); 
+                if(tbl) {
+                    tbl.innerHTML = logs.sort((a,b) => (b.jam_masuk?.seconds || 0) - (a.jam_masuk?.seconds || 0)).slice(0, 10).map(d => {
+                        let jIn = d.jam_masuk ? new Date(d.jam_masuk.seconds*1000).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : "--:--";
+                        return `<tr class="border-b border-slate-800 hover:bg-slate-900 transition"><td class="p-4 font-mono text-emerald-400 font-black">${jIn}</td><td class="p-4 text-white font-black uppercase tracking-tighter">${d.nama}</td><td class="p-4 font-bold text-slate-500 text-[10px]">${d.kelas}</td><td class="p-4 text-[9px] font-black uppercase italic tracking-widest text-slate-300">${d.status_terakhir}</td><td class="p-4 text-center">-</td></tr>`;
+                    }).join('');
+                }
+                
+                // Update Alpha View if active
+                const alphaView = document.getElementById('view-alpha');
+                if (alphaView && !alphaView.classList.contains('hidden')) loadSiswaAlpha();
+            });
+        }
+
+        // --- UTILS ---
+        function updateUIKelas() { 
+            const sAlpha = document.getElementById('filter-kelas-alpha');
+            const sRekap = document.getElementById('pilih-kelas'); 
+            if(!sAlpha || !sRekap) return; 
+            
+            let options = '<option value="">SEMUA KELAS</option>';
+            Object.keys(mapKelas).sort().forEach(k => { options += `<option value="${k}">${k}</option>`; });
+            sAlpha.innerHTML = options;
+            sRekap.innerHTML = '<option value="">- KELAS -</option>' + options.replace('SEMUA KELAS', '- KELAS -');
+        }
+
+        function setupDropdown() { 
+            const d=new Date(); 
+            const m=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agt","Sep","Okt","Nov","Des"]; 
+            const blnSelect = document.getElementById('pilih-bulan');
+            if(blnSelect) m.forEach((b,i)=>{let o=new Option(b,i); if(i===d.getMonth())o.selected=true; blnSelect.add(o);}); 
+            const thnSelect = document.getElementById('pilih-tahun');
+            if(thnSelect) for(let y=d.getFullYear()-1;y<=d.getFullYear()+1;y++) thnSelect.add(new Option(y,y)); 
+        }
+
+        function loadHariLibur() { 
+            const q = query(collection(db, "hari_libur"), orderBy("tanggal", "asc")); 
+            onSnapshot(q, (snap) => { cacheHariLibur = {}; snap.forEach(doc => { cacheHariLibur[doc.data().tanggal] = true; }); }); 
+        }
+
+        window.logout = () => { sessionStorage.clear(); window.location.href='index.html'; }
+        setInterval(() => { const el = document.getElementById('jam-real'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID'); }, 1000);
+    </script>
+</body>
+</html>
