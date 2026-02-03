@@ -335,16 +335,14 @@
             finally { document.getElementById('loadingOverlay').classList.add('hidden'); }
         }
 
-        // --- LOAD JURNAL & REFLEKSI (VERSI ANTI MACET) ---
+        // --- LOAD JURNAL & REFLEKSI (VERSI ANTI MACET + ADMIN SYNC) ---
         window.loadTimelineKBM = () => {
             const container = document.getElementById('timeline-kbm');
             const debugInfo = document.getElementById('debug-info-jurnal');
             const todayStr = getTodayID();
 
-            // TAMPILKAN INFO DEBUG DI LAYAR AGAR KETAHUAN SALAHNYA
             debugInfo.innerHTML = `Mencari Jurnal: <br>Kelas: <b>${userSiswa.kelas}</b> | Tgl: <b>${todayStr}</b>`;
 
-            // QUERY TANPA 'ORDERBY' BIAR GA PERLU INDEX FIREBASE
             const q = query(
                 collection(db, "jurnal_guru"), 
                 where("kelas", "==", userSiswa.kelas), 
@@ -360,22 +358,10 @@
                     return; 
                 }
                 
-                // Ambil data dulu, baru sort di Javascript (Client Side)
                 let journals = [];
-                snap.forEach(doc => {
-                    let d = doc.data();
-                    d.id = doc.id;
-                    journals.push(d);
-                });
+                snap.forEach(doc => { let d = doc.data(); d.id = doc.id; journals.push(d); });
+                journals.sort((a, b) => { let tA = a.waktu ? a.waktu.seconds : 0; let tB = b.waktu ? b.waktu.seconds : 0; return tB - tA; });
 
-                // Sortir manual berdasarkan waktu (Descending / Terbaru diatas)
-                journals.sort((a, b) => {
-                    let tA = a.waktu ? a.waktu.seconds : 0;
-                    let tB = b.waktu ? b.waktu.seconds : 0;
-                    return tB - tA;
-                });
-
-                // Render HTML
                 journals.forEach(d => {
                     const jam = d.waktu ? new Date(d.waktu.seconds*1000).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '--:--';
                     
@@ -406,8 +392,6 @@
 
                 container.innerHTML = htmlContent;
                 lucide.createIcons();
-                
-                // Cek status per jurnal
                 journals.forEach(d => cekStatusRefleksi(d.id));
             });
         }
@@ -419,12 +403,25 @@
             btnAktif.classList.remove('bg-white', 'border-slate-200'); btnAktif.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50', 'border-indigo-200');
         }
 
+        // UPDATE AGAR ANGKA MUNCUL DI ADMIN
         window.kirimRefleksi = async (idJurnal) => {
             const emosi = tempRefleksi[idJurnal]; const pesan = document.getElementById(`txt-${idJurnal}`).value;
             if(!emosi) return Swal.fire('Pilih Emosi', 'Klik salah satu ikon wajah dulu ya.', 'warning');
             Swal.fire({ title: 'Mengirim...', didOpen: () => Swal.showLoading() });
+            
             try {
+                // 1. Simpan Detail
                 await setDoc(doc(db, "jurnal_guru", idJurnal, "refleksi", userSiswa.nisn), { nisn: userSiswa.nisn, nama: userSiswa.nama, emosi: emosi, pesan: pesan || "-", waktu: serverTimestamp() });
+                
+                // 2. UPDATE COUNTER DI ADMIN (PENTING)
+                const jurnalDoc = doc(db, "jurnal_guru", idJurnal);
+                let updateData = { total_respon: increment(1), updated_at: serverTimestamp() };
+                if(emosi === 'Senang') updateData['count_senang'] = increment(1);
+                if(emosi === 'Terinspirasi') updateData['count_paham'] = increment(1);
+                if(emosi === 'Bingung') updateData['count_bingung'] = increment(1);
+                if(emosi === 'Ngantuk') updateData['count_ngantuk'] = increment(1);
+                await updateDoc(jurnalDoc, updateData);
+
                 Swal.close(); Swal.fire({ icon: 'success', title: 'Terkirim', timer: 1000, showConfirmButton: false });
                 document.getElementById(`box-refleksi-${idJurnal}`).classList.add('hidden'); document.getElementById(`done-${idJurnal}`).classList.remove('hidden');
             } catch (e) { console.error(e); Swal.fire('Gagal', 'Cek koneksi internet.', 'error'); }
