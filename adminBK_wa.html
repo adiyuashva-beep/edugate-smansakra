@@ -227,7 +227,7 @@
             // OPTIMASI: Gunakan Array Buffer (Satu kali render DOM)
             let htmlRows = [];
             daftarAlpha.sort((a,b) => a.nama.localeCompare(b.nama)).forEach((s, idx) => {
-                const pesan = `Assalamu'alaikum Bapak/Ibu, menginformasikan bahwa ananda *${s.nama}* (${s.kelas}) hingga pukul ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} WIB belum melakukan presensi di SiGanteng. Mohon konfirmasinya. Terima kasih.`;
+                const pesan = `Assalamu'alaikum Bapak/Ibu, menginformasikan bahwa ananda *${s.nama}* (${s.kelas}) hingga pukul ${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} WIB belum melakukan presensi di Edugate System. Mohon konfirmasinya. Terima kasih.`;
                 const linkWA = `https://wa.me/${s.hp || ''}?text=${encodeURIComponent(pesan)}`;
                 
                 htmlRows.push(`
