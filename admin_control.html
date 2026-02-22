@@ -142,7 +142,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // --- KONFIGURASI EDUGATE SMAN 1 KARANGANYAR ---
         const firebaseConfig = {
           apiKey: "AIzaSyBTanYQQ-oPkO_Zw9cg_H5V0jIJvt_x72c",
           authDomain: "edugate-smansakra.firebaseapp.com",
@@ -155,9 +154,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- 1. LISTENER REALTIME (Agar status tombol selalu update) ---
-        
-        // A. Pantau Saklar Akses (Gerbang)
+        // --- LISTENER REALTIME ---
         onSnapshot(doc(db, "pengaturan", "akses_global"), (docSnap) => {
             if (docSnap.exists()) {
                 const d = docSnap.data();
@@ -166,12 +163,10 @@
                 renderTombol('btn-akses-ortu', d.ortu);
                 renderTombol('btn-akses-pejabat', d.pejabat);
             } else {
-                // Inisialisasi jika belum ada
                 setDoc(doc(db, "pengaturan", "akses_global"), { siswa: true, guru: true, ortu: true, pejabat: true });
             }
         });
 
-        // B. Pantau GPS & Sekolah
         onSnapshot(doc(db, "pengaturan", "sekolah"), (docSnap) => {
             if (docSnap.exists()) {
                 const d = docSnap.data();
@@ -191,7 +186,6 @@
             }
         });
 
-        // C. Pantau Fitur Tambahan
         onSnapshot(doc(db, "pengaturan", "fitur"), (docSnap) => {
             if (docSnap.exists()) {
                 const d = docSnap.data();
@@ -216,38 +210,24 @@
 
         // --- LOGIKA TOGGLE (KLIK) ---
         window.toggleAkses = async (target) => {
-            const ref = doc(db, "pengaturan", "akses_global");
-            // Kita pakai update manual karena toggle butuh state sekarang. 
-            // Trik: Baca teks tombol untuk tau state sekarang (hemat read)
             const btn = document.getElementById(`btn-akses-${target}`);
-            const newState = btn.innerText.includes("OFF"); // Kalau skrg OFF, berarti mau di ON kan
-            
-            await setDoc(ref, { [target]: newState }, { merge: true });
-            Swal.fire({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 1000,
-                icon: newState ? 'success' : 'warning',
-                title: `Akses ${target.toUpperCase()} ${newState ? 'DIBUKA' : 'DITUTUP'}`
-            });
+            const newState = btn.innerText.includes("OFF");
+            await setDoc(doc(db, "pengaturan", "akses_global"), { [target]: newState }, { merge: true });
+            Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000, icon: newState ? 'success' : 'warning', title: `Akses ${target.toUpperCase()} ${newState ? 'DIBUKA' : 'DITUTUP'}` });
         }
 
         window.toggleFitur = async (field) => {
-            const ref = doc(db, "pengaturan", "fitur");
             const btnID = field === 'kbm_ortu' ? 'btn-fitur-ortu' : 'btn-fitur-guru';
             const btn = document.getElementById(btnID);
             const newState = btn.innerText.includes("OFF");
-            
-            await setDoc(ref, { [field]: newState }, { merge: true });
+            await setDoc(doc(db, "pengaturan", "fitur"), { [field]: newState }, { merge: true });
         }
 
         window.toggleGPS = async () => {
             const btn = document.getElementById('btn-gps-mode');
-            const newState = btn.innerText.includes("MATI"); // Kalau Mati mau dihidupkan
+            const newState = btn.innerText.includes("MATI");
             await setDoc(doc(db, "pengaturan", "sekolah"), { validasi_gps_aktif: newState }, { merge: true });
-            Swal.fire({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 1000,
-                icon: newState ? 'success' : 'info',
-                title: `Mode GPS ${newState ? 'DISIPLIN' : 'DARURAT'}`
-            });
+            Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1000, icon: newState ? 'success' : 'info', title: `Mode GPS ${newState ? 'DISIPLIN' : 'DARURAT'}` });
         }
 
         window.simpanRadius = async () => {
