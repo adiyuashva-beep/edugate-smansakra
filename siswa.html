@@ -216,6 +216,10 @@
         let streamKamera = null; let tipeAbsenAktif = ""; let tempFotoBukti = null;
         let tempRefleksi = {}; let jenisIzinAktif = "";
 
+        // --- TAMBAHAN UNTUK CONTROL PANEL GPS ---
+        let configSekolah = { validasi_gps_aktif: true, radius_meter: 50 };
+        let circleSekolah = null; let markerSiswa = null;
+
         // VARIABEL JADWAL SINKRONISASI
         let jadwalHariIni = { masuk: "06:30", telat: "07:00", pulang: "15:30", libur: false };
         let modePamungkas = false;
@@ -382,11 +386,72 @@
             });
         }
 
-        // --- GPS & MAP ---
-        window.initMap = () => { if(map)return; map=L.map('mapMini',{zoomControl:false}).setView([SEKOLAH_LAT,SEKOLAH_LNG],17); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); L.circle([SEKOLAH_LAT,SEKOLAH_LNG],{radius:50,color:'red'}).addTo(map); }
-        window.validasiGPS = () => { if(!lokasiUser)return false; return map.distance(lokasiUser,[SEKOLAH_LAT,SEKOLAH_LNG])<=50; }
-        window.cekGPS = () => navigator.geolocation.watchPosition(p=>{lokasiUser={lat:p.coords.latitude,lng:p.coords.longitude}; if(map) L.marker(lokasiUser).addTo(map);});
-        window.syncAdminSettings = () => onSnapshot(doc(db,"pengaturan","sekolah"),d=>{if(d.exists()){const c=d.data();if(c.lokasi_lat)SEKOLAH_LAT=c.lokasi_lat;if(c.lokasi_lng)SEKOLAH_LNG=c.lokasi_lng;}});
+        // --- LOGIKA GPS & MAP (TERKONEKSI KE CONTROL PANEL) ---
+        window.initMap = () => { 
+            if(map) { map.invalidateSize(); return; } 
+            map = L.map('mapMini', {zoomControl: false}).setView([SEKOLAH_LAT, SEKOLAH_LNG], 17); 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); 
+            circleSekolah = L.circle([SEKOLAH_LAT, SEKOLAH_LNG], {radius: configSekolah.radius_meter, color: 'red'}).addTo(map); 
+        }
+
+        window.validasiGPS = () => { 
+            // CEK TOGGLE ADMIN (Jika Bypass GPS Aktif, Langsung Lolos)
+            if (configSekolah.validasi_gps_aktif === false) return true; 
+
+            if(!lokasiUser) { 
+                Swal.fire('Tunggu Sebentar', 'Sedang mencari koordinat GPS kamu...', 'info'); 
+                return false; 
+            } 
+            const jarak = map.distance(lokasiUser, [SEKOLAH_LAT, SEKOLAH_LNG]);
+            if(jarak > configSekolah.radius_meter) {
+                Swal.fire('Di Luar Radius', `Jarak kamu ${Math.round(jarak)}m dari sekolah. Maksimal radius adalah ${configSekolah.radius_meter}m.`, 'error');
+                return false;
+            }
+            return true;
+        }
+
+        window.cekGPS = () => {
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(p => {
+                    lokasiUser = {lat: p.coords.latitude, lng: p.coords.longitude}; 
+                    if(map) {
+                        if(!markerSiswa) markerSiswa = L.marker(lokasiUser).addTo(map);
+                        else markerSiswa.setLatLng(lokasiUser);
+                    }
+                }, (e) => console.log(e), { enableHighAccuracy: true });
+            }
+        };
+
+        window.syncAdminSettings = () => {
+            onSnapshot(doc(db, "pengaturan", "sekolah"), d => {
+                if(d.exists()) {
+                    const c = d.data();
+                    if(c.lokasi_lat) SEKOLAH_LAT = parseFloat(c.lokasi_lat);
+                    if(c.lokasi_lng) SEKOLAH_LNG = parseFloat(c.lokasi_lng);
+                    if(c.radius_meter) configSekolah.radius_meter = parseInt(c.radius_meter);
+                    if(c.validasi_gps_aktif !== undefined) configSekolah.validasi_gps_aktif = c.validasi_gps_aktif;
+
+                    // Update UI Map & Teks kalau lagi kebuka
+                    if(circleSekolah) {
+                        circleSekolah.setLatLng([SEKOLAH_LAT, SEKOLAH_LNG]);
+                        circleSekolah.setRadius(configSekolah.radius_meter);
+                    }
+                    if(map) map.setView([SEKOLAH_LAT, SEKOLAH_LNG]);
+
+                    // Ubah UI Text di Peta kalau Darurat Nyala
+                    const labelRadius = document.querySelector('#page-absen .absolute.bottom-2 span');
+                    if (labelRadius) {
+                        if (configSekolah.validasi_gps_aktif === false) {
+                            labelRadius.innerText = "MODE DARURAT (BEBAS GPS)";
+                            labelRadius.className = "bg-orange-600/90 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold border border-orange-400 shadow-lg";
+                        } else {
+                            labelRadius.innerText = `Radius Sekolah (${configSekolah.radius_meter}m)`;
+                            labelRadius.className = "bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm";
+                        }
+                    }
+                }
+            });
+        }
 
         // --- VALIDASI ABSENSI MASUK & PULANG SESUAI JADWAL ADMIN ---
         window.klikMasuk = () => {
@@ -408,12 +473,12 @@
                 Swal.fire({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, icon: 'warning', title: 'Anda Terlambat!' });
             }
 
+            // Alert error sudah ditangani langsung di dalam validasiGPS()
             if(validasiGPS()) bukaCam(statusMasuk); 
-            else Swal.fire('Di Luar Radius', 'Anda belum berada di area SMAN 1 Karanganyar.', 'error');
         }
 
         window.klikPulang = () => {
-            if(!validasiGPS()) return Swal.fire('Di Luar Radius', 'Anda belum berada di area sekolah.', 'error');
+            if(!validasiGPS()) return; // Warning sudah dimunculkan oleh validasiGPS()
 
             const now = new Date();
             const curJam = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
